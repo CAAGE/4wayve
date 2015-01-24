@@ -1,3 +1,5 @@
+import java.io.File;
+import java.util.Random;
 import java.util.ArrayList;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
@@ -175,6 +177,53 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 				framesRemaining--;
 				if(framesRemaining<=0){
 					active = false;
+					myLock.lock(); try{
+						//randomly assign instruments
+						Random rand = new Random();
+						int[] instruments = new int[4];
+						instruments[0] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+						instruments[1] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+						instruments[2] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+						instruments[3] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+						//write the file
+						String locFileName = "track" + System.currentTimeMillis() + ".trk";
+						String usrHome = System.getProperty("user.home");
+						char pathSepChar = File.separatorChar;
+						String fileLoc = usrHome + pathSepChar + "GameSaves" + pathSepChar + "FourWayve";
+						File parentFolder = new File(fileLoc);
+						if(!parentFolder.exists()){
+							parentFolder.mkdirs();
+						}
+						try{
+							AudioEventPlayer.saveEventFile(new File(fileLoc, locFileName), instruments, startFrames, endFrames);
+						} catch(IOException e){e.printStackTrace();}
+						//clear the lists
+						startFrames.get(0).clear();
+						startFrames.get(1).clear();
+						startFrames.get(2).clear();
+						startFrames.get(3).clear();
+						startFrames.get(4).clear();
+						startFrames.get(5).clear();
+						startFrames.get(6).clear();
+						startFrames.get(7).clear();
+						startFrames.get(8).clear();
+						startFrames.get(9).clear();
+						startFrames.get(10).clear();
+						startFrames.get(11).clear();
+						endFrames.get(0).clear();
+						endFrames.get(1).clear();
+						endFrames.get(2).clear();
+						endFrames.get(3).clear();
+						endFrames.get(4).clear();
+						endFrames.get(5).clear();
+						endFrames.get(6).clear();
+						endFrames.get(7).clear();
+						endFrames.get(8).clear();
+						endFrames.get(9).clear();
+						endFrames.get(10).clear();
+						endFrames.get(11).clear();
+						//let the menu know the name of the file
+					}finally{myLock.unlock();}
 				}
 				else if(framesRemaining % metronomeFrames == 0){
 					try{
