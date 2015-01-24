@@ -19,29 +19,9 @@ import javax.swing.JComponent;
 public class CreationModePanel extends JComponent implements Runnable, KeyListener{
 	
 	/**
-	 * The x location of the blocks in the lanes relative to lane center.
+	 * The number of frames remaining.
 	 */
-	protected static final float XOFFSET = -0.025f;
-	
-	/**
-	 * The y location of the keys.
-	 */
-	protected static final float KEYYLOC = 0.1f;
-	
-	/**
-	 * The width of the keys.
-	 */
-	protected static final float KEYWID = 0.05f;
-	
-	/**
-	 * The height of the keys.
-	 */
-	protected static final float KEYHIG = 0.101f;
-	
-	/**
-	 * The relative x locations of the lanes.
-	 */
-	protected static final float[] relLocs = new float[]{1.0f/16, 2.0f/16, 3.0f/16, 5.0f/16, 6.0f/16, 7.0f/16, 9.0f/16, 10.0f/16, 11.0f/16, 13.0f/16, 14.0f/16, 15.0f/16};
+	protected static long framesRemaining;
 	
 	/**
 	 * The second buffer of this panel.
@@ -84,24 +64,11 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	protected BufferedImage overlay;
 	
 	/**
-	 * The image for an inactive key.
-	 */
-	protected BufferedImage inactiveKey;
-	
-	/**
-	 * The image for a pressed key.
-	 */
-	protected BufferedImage activeKey;
-	
-	/**
-	 * Which keys are currently pressed.
-	 */
-	protected boolean[] curPressed;
-	
-	/**
 	 * Which players are currently playing.
 	 */
 	protected boolean[] playing;
+	
+	protected Keyboard curKeys;
 	
 	/**
 	 * This creates a cration mode panel.
@@ -111,15 +78,13 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	public CreationModePanel(BufferedImage backgroundImage, float backScrollRate) throws IOException{
 		overlay = ImageIO.read(ClassLoader.getSystemResource("images/overlay.png"));
-		inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
-		activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
+		curKeys = new Keyboard(0.1f);
 		setDoubleBuffered(false);
 		background = backgroundImage;
 		backgroundOffset = 0;
 		backgroundRate = backScrollRate;
 		myLock = new ReentrantLock();
 		frameNanos = 16000000;
-		curPressed = new boolean[relLocs.length];
 		playing = new boolean[4];
 	}
 	
@@ -139,6 +104,10 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 				}finally{myLock.unlock();}
 				Graphics toDraw = this.getGraphics();
 				paintComponent(getGraphics());
+				framesRemaining--;
+				if(framesRemaining<=0){
+					active = false;
+				}
 			}
 			long frameEndTime = System.nanoTime();
 			long sleepTime = frameNanos - (frameEndTime - frameStartTime);
@@ -154,6 +123,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 * This will make this panel active (the thread will do stuff).
 	 */
 	public void activate(){
+		framesRemaining = 60*60;
 		active = true;
 	}
 	
@@ -164,9 +134,16 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	public void setPlayerActive(int player, boolean active){
 		playing[player] = active;
-		curPressed[3*player] = false;
-		curPressed[3*player+1] = false;
-		curPressed[3*player+2] = false;
+		if(active){
+			curKeys.setKeyState(3*player, Keyboard.INACTIVE);
+			curKeys.setKeyState(3*player+1, Keyboard.INACTIVE);
+			curKeys.setKeyState(3*player+2, Keyboard.INACTIVE);
+		}
+		else{
+			curKeys.setKeyState(3*player, Keyboard.INVISIBLE);
+			curKeys.setKeyState(3*player+1, Keyboard.INVISIBLE);
+			curKeys.setKeyState(3*player+2, Keyboard.INVISIBLE);
+		}
 	}
 	
 	/**
@@ -176,49 +153,49 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	public void keyPressed(KeyEvent e){
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_A:
-			curPressed[0] = true;
+			curKeys.setKeyState(0, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_S:
-			curPressed[1] = true;
+			curKeys.setKeyState(1, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_D:
-			curPressed[2] = true;
+			curKeys.setKeyState(2, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_J:
-			curPressed[3] = true;
+			curKeys.setKeyState(3, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_K:
-			curPressed[4] = true;
+			curKeys.setKeyState(4, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_L:
-			curPressed[5] = true;
+			curKeys.setKeyState(5, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_LEFT:
-			curPressed[6] = true;
+			curKeys.setKeyState(6, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_DOWN:
-			curPressed[7] = true;
+			curKeys.setKeyState(7, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_RIGHT:
-			curPressed[8] = true;
+			curKeys.setKeyState(8, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_1:
-			curPressed[9] = true;
+			curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_2:
-			curPressed[10] = true;
+			curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_3:
-			curPressed[11] = true;
+			curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD1:
-			curPressed[9] = true;
+			curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD2:
-			curPressed[10] = true;
+			curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD3:
-			curPressed[11] = true;
+			curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
 			break;
 		default:
 			//ignore
@@ -233,49 +210,49 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	public void keyReleased(KeyEvent e){
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_A:
-			curPressed[0] = false;
+			curKeys.setKeyState(0, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_S:
-			curPressed[1] = false;
+			curKeys.setKeyState(1, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_D:
-			curPressed[2] = false;
+			curKeys.setKeyState(2, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_J:
-			curPressed[3] = false;
+			curKeys.setKeyState(3, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_K:
-			curPressed[4] = false;
+			curKeys.setKeyState(4, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_L:
-			curPressed[5] = false;
+			curKeys.setKeyState(5, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_LEFT:
-			curPressed[6] = false;
+			curKeys.setKeyState(6, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_DOWN:
-			curPressed[7] = false;
+			curKeys.setKeyState(7, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_RIGHT:
-			curPressed[8] = false;
+			curKeys.setKeyState(8, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_1:
-			curPressed[9] = false;
+			curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_2:
-			curPressed[10] = false;
+			curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_3:
-			curPressed[11] = false;
+			curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD1:
-			curPressed[9] = false;
+			curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD2:
-			curPressed[10] = false;
+			curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		case KeyEvent.VK_NUMPAD3:
-			curPressed[11] = false;
+			curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
 			break;
 		default:
 			//ignore
@@ -307,15 +284,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 				cury += scrheight;
 			}
 			bufDraw.drawImage(overlay, 0, 0, getWidth(), getHeight(), null);
-			for(int i = 0; i<relLocs.length; i++){
-				if(playing[i/3]){
-					int xloc = (int)((relLocs[i] + XOFFSET) * getWidth());
-					int yloc = (int)(KEYYLOC * getHeight());
-					int wid = (int)(KEYWID * getWidth());
-					int hig = (int)(KEYHIG * getHeight());
-					bufDraw.drawImage(curPressed[i] ? activeKey : inactiveKey, xloc, yloc, wid, hig, null);
-				}
-			}
+			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
