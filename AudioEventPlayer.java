@@ -26,6 +26,7 @@ public class AudioEventPlayer {
 	            pianoend.setMessage(ShortMessage.NOTE_OFF,0,60,93);
 	            Receiver rcvr = MidiSystem.getReceiver();
 	            rcvr.send(pianoc,-1);
+				try{Thread.sleep(500);}catch(InterruptedException e){}
 	            rcvr.send(pianoend,-1);
 	            sequencer.open();
 	        } catch (Exception e) {
