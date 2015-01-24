@@ -58,6 +58,21 @@ public class AudioEventPlayer {
                 notevalue = 43;
             }
         }
+        if(instrument == 3){
+            bank = 0;
+            ShortMessage midiinstrument = new ShortMessage();
+            midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,26,0);
+            rcvr.send(midiinstrument,-1);
+            if(note == 0){
+                notevalue = 48;
+            }
+            if(note == 1){
+                notevalue = 52;
+            }
+            if(note == 2){
+                notevalue = 55;
+            }
+        }
         if(instrument == -1){
             bank = 0;
             ShortMessage midiinstrument = new ShortMessage();
@@ -98,6 +113,20 @@ public class AudioEventPlayer {
                 notevalue = 43;
             }
         }
+        if(instrument == 3){
+            ShortMessage midiinstrument = new ShortMessage();
+            midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,26,0);
+            rcvr.send(midiinstrument,-1);
+            if(note == 0){
+                notevalue = 48;
+            }
+            if(note == 1){
+                notevalue = 52;
+            }
+            if(note == 2){
+                notevalue = 55;
+            }
+        }
         if(instrument == -1){
             ShortMessage midiinstrument = new ShortMessage();
             midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 115, 0);
@@ -120,9 +149,9 @@ public class AudioEventPlayer {
 	    } else {
 	        // Acquire resources and make operational.
             sequencer.open();
-            startNote(2,0);
+            startNote(3,0);
 		    try{Thread.sleep(500);}catch(InterruptedException e){}
-            endNote(2,0);
+            endNote(3,0);
             try{Thread.sleep(500);}catch(InterruptedException e){}
             startNote(0,1);
             try{Thread.sleep(500);}catch(InterruptedException e){}
