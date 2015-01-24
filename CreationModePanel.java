@@ -1,5 +1,5 @@
+import java.util.ArrayList;
 import javax.sound.midi.InvalidMidiDataException;
-
 import javax.sound.midi.MidiUnavailableException;
 import java.util.List;
 import java.awt.event.KeyEvent;
@@ -21,6 +21,11 @@ import javax.swing.JComponent;
  * This will run the creation mode of the game.
  */
 public class CreationModePanel extends JComponent implements Runnable, KeyListener{
+	
+	/**
+	 * The length of a song, in frames.
+	 */
+	protected static final long SONGLENGTH = 60*60;
 	
 	/**
 	 * The number of frames remaining.
@@ -87,17 +92,29 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	protected CreationBlockChannel[] blockLanes;
 	
+	/**
+	 * The frame numbers at which the lanes start playing.
+	 */
 	protected List<List<Long>> startFrames;
 	
+	/**
+	 * The frame numbers at which the lanes stop playing.
+	 */
 	protected List<List<Long>> endFrames;
+	
+	/**
+	 * The current state of the keys.
+	 */
+	protected boolean[] curKeyState;
 	
 	/**
 	 * This creates a cration mode panel.
 	 * @param backgroundImage The image to display as a background.
 	 * @param backScrollRate The rate at which the background should scroll.
+	 * @param blockScrollRate The rate at which the stones fall.
 	 * @throws IOException If there is a problem loading an image.
 	 */
-	public CreationModePanel(BufferedImage backgroundImage, float backScrollRate) throws IOException{
+	public CreationModePanel(BufferedImage backgroundImage, float backScrollRate, float blockScrollRate) throws IOException{
 		overlay = ImageIO.read(ClassLoader.getSystemResource("images/overlay.png"));
 		curKeys = new Keyboard(0.1f);
 		setDoubleBuffered(false);
@@ -107,10 +124,26 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		myLock = new ReentrantLock();
 		frameNanos = 16000000;
 		playing = new boolean[4];
-		blockLanes = new CreationBlockChannel[12];
-		for(int i = 0; i<blockLanes.length; i++){
-			//blockLanes[i] = new CreationBlockChannel(List<Long> startTimeList, List<Long> endTimeList, float xLocation, float scrollRate, int color);
+		startFrames = new ArrayList<>();
+		endFrames = new ArrayList<>();
+		for(int i = 0; i<12; i++){
+			startFrames.add(new ArrayList<Long>());
+			endFrames.add(new ArrayList<Long>());
 		}
+		blockLanes = new CreationBlockChannel[12];
+		blockLanes[ 0] = new CreationBlockChannel(startFrames.get( 0), endFrames.get( 0), ( 1.0f/16)-0.025f, blockScrollRate, 0);
+		blockLanes[ 1] = new CreationBlockChannel(startFrames.get( 1), endFrames.get( 1), ( 2.0f/16)-0.025f, blockScrollRate, 0);
+		blockLanes[ 2] = new CreationBlockChannel(startFrames.get( 2), endFrames.get( 2), ( 3.0f/16)-0.025f, blockScrollRate, 0);
+		blockLanes[ 3] = new CreationBlockChannel(startFrames.get( 3), endFrames.get( 3), ( 5.0f/16)-0.025f, blockScrollRate, 1);
+		blockLanes[ 4] = new CreationBlockChannel(startFrames.get( 4), endFrames.get( 4), ( 6.0f/16)-0.025f, blockScrollRate, 1);
+		blockLanes[ 5] = new CreationBlockChannel(startFrames.get( 5), endFrames.get( 5), ( 7.0f/16)-0.025f, blockScrollRate, 1);
+		blockLanes[ 6] = new CreationBlockChannel(startFrames.get( 6), endFrames.get( 6), ( 9.0f/16)-0.025f, blockScrollRate, 2);
+		blockLanes[ 7] = new CreationBlockChannel(startFrames.get( 7), endFrames.get( 7), (10.0f/16)-0.025f, blockScrollRate, 2);
+		blockLanes[ 8] = new CreationBlockChannel(startFrames.get( 8), endFrames.get( 8), (11.0f/16)-0.025f, blockScrollRate, 2);
+		blockLanes[ 9] = new CreationBlockChannel(startFrames.get( 9), endFrames.get( 9), (13.0f/16)-0.025f, blockScrollRate, 3);
+		blockLanes[10] = new CreationBlockChannel(startFrames.get(10), endFrames.get(10), (14.0f/16)-0.025f, blockScrollRate, 3);
+		blockLanes[11] = new CreationBlockChannel(startFrames.get(11), endFrames.get(11), (15.0f/16)-0.025f, blockScrollRate, 3);
+		curKeyState = new boolean[12];
 	}
 	
 	/**
@@ -126,6 +159,9 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 					if(backgroundOffset > scrheight){
 						backgroundOffset -= scrheight;
 					}
+					for(int i = 0; i<blockLanes.length; i++){
+						blockLanes[i].setTime((SONGLENGTH) - framesRemaining);
+					}
 				}finally{myLock.unlock();}
 				Graphics toDraw = this.getGraphics();
 				paintComponent(getGraphics());
@@ -135,8 +171,8 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 				}
 				else if(framesRemaining % metronomeFrames == 0){
 					try{
-						AudioEventPlayer.endNote(0,0);
-						AudioEventPlayer.startNote(0,0);
+						AudioEventPlayer.endNote(-1,0);
+						AudioEventPlayer.startNote(-1,0);
 					} catch(MidiUnavailableException|InvalidMidiDataException e){}
 				}
 			}
@@ -154,7 +190,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 * This will make this panel active (the thread will do stuff).
 	 */
 	public void activate(){
-		framesRemaining = 60*60;
+		framesRemaining = SONGLENGTH;
 		active = true;
 	}
 	
@@ -165,6 +201,9 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	public void setPlayerActive(int player, boolean active){
 		playing[player] = active;
+		curKeyState[3*player] = false;
+		curKeyState[3*player+1] = false;
+		curKeyState[3*player+2] = false;
 		if(active){
 			curKeys.setKeyState(3*player, Keyboard.INACTIVE);
 			curKeys.setKeyState(3*player+1, Keyboard.INACTIVE);
@@ -186,6 +225,30 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	}
 	
 	/**
+	 * This will start a key press event.
+	 * @param lane The lane that should start playing.
+	 */
+	protected void startEvent(int lane){
+		startFrames.get(lane).add(Long.valueOf(SONGLENGTH-framesRemaining));
+		endFrames.get(lane).add(-1l);
+	}
+	
+	/**
+	 * This will end a key press event.
+	 * @param lane The lane that should stop playing.
+	 */
+	protected void endEvent(int lane){
+		if(startFrames.get(lane).size() > 0){
+			List<Long> laneList = endFrames.get(lane);
+			laneList.set(laneList.size()-1, Long.valueOf(SONGLENGTH-framesRemaining));
+			if(laneList.get(laneList.size()-1) == startFrames.get(lane).get(laneList.size()-1)){
+				laneList.remove(laneList.size()-1);
+				startFrames.get(lane).remove(startFrames.get(lane).size()-1);
+			}
+		}
+	}
+	
+	/**
 	 * This will handle keys being pressed.
 	 * @param e The key being pressed.
 	 */
@@ -193,49 +256,109 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		myLock.lock(); try{
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_A:
-				curKeys.setKeyState(0, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[0]){
+					curKeys.setKeyState(0, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(0);
+				}
+				curKeyState[0] = true;
 				break;
 			case KeyEvent.VK_S:
-				curKeys.setKeyState(1, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[1]){
+					curKeys.setKeyState(1, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(1);
+				}
+				curKeyState[1] = true;
 				break;
 			case KeyEvent.VK_D:
-				curKeys.setKeyState(2, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[2]){
+					curKeys.setKeyState(2, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(2);
+				}
+				curKeyState[2] = true;
 				break;
 			case KeyEvent.VK_J:
-				curKeys.setKeyState(3, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[3]){
+					curKeys.setKeyState(3, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(3);
+				}
+				curKeyState[3] = true;
 				break;
 			case KeyEvent.VK_K:
-				curKeys.setKeyState(4, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[4]){
+					curKeys.setKeyState(4, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(4);
+				}
+				curKeyState[4] = true;
 				break;
 			case KeyEvent.VK_L:
-				curKeys.setKeyState(5, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[5]){
+					curKeys.setKeyState(5, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(5);
+				}
+				curKeyState[5] = true;
 				break;
 			case KeyEvent.VK_LEFT:
-				curKeys.setKeyState(6, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[6]){
+					curKeys.setKeyState(6, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(6);
+				}
+				curKeyState[6] = true;
 				break;
 			case KeyEvent.VK_DOWN:
-				curKeys.setKeyState(7, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[7]){
+					curKeys.setKeyState(7, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(7);
+				}
+				curKeyState[7] = true;
 				break;
 			case KeyEvent.VK_RIGHT:
-				curKeys.setKeyState(8, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[8]){
+					curKeys.setKeyState(8, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(8);
+				}
+				curKeyState[8] = true;
 				break;
 			case KeyEvent.VK_1:
-				curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[9]){
+					curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(9);
+				}
+				curKeyState[9] = true;
 				break;
 			case KeyEvent.VK_2:
-				curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[10]){
+					curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(10);
+				}
+				curKeyState[10] = true;
 				break;
 			case KeyEvent.VK_3:
-				curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[11]){
+					curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(11);
+				}
+				curKeyState[11] = true;
 				break;
 			case KeyEvent.VK_NUMPAD1:
-				curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[9]){
+					curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(9);
+				}
+				curKeyState[9] = true;
 				break;
 			case KeyEvent.VK_NUMPAD2:
-				curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[10]){
+					curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(10);
+				}
+				curKeyState[10] = true;
 				break;
 			case KeyEvent.VK_NUMPAD3:
-				curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+				if(!curKeyState[11]){
+					curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
+					startEvent(11);
+				}
+				curKeyState[11] = true;
 				break;
 			default:
 				//ignore
@@ -252,49 +375,109 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		myLock.lock(); try{
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_A:
-				curKeys.setKeyState(0, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[0]){
+					curKeys.setKeyState(0, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(0);
+				}
+				curKeyState[0] = false;
 				break;
 			case KeyEvent.VK_S:
-				curKeys.setKeyState(1, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[1]){
+					curKeys.setKeyState(1, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(1);
+				}
+				curKeyState[1] = false;
 				break;
 			case KeyEvent.VK_D:
-				curKeys.setKeyState(2, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[2]){
+					curKeys.setKeyState(2, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(2);
+				}
+				curKeyState[2] = false;
 				break;
 			case KeyEvent.VK_J:
-				curKeys.setKeyState(3, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[3]){
+					curKeys.setKeyState(3, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(3);
+				}
+				curKeyState[3] = false;
 				break;
 			case KeyEvent.VK_K:
-				curKeys.setKeyState(4, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[4]){
+					curKeys.setKeyState(4, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(4);
+				}
+				curKeyState[4] = false;
 				break;
 			case KeyEvent.VK_L:
-				curKeys.setKeyState(5, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[5]){
+					curKeys.setKeyState(5, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(5);
+				}
+				curKeyState[5] = false;
 				break;
 			case KeyEvent.VK_LEFT:
-				curKeys.setKeyState(6, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[6]){
+					curKeys.setKeyState(6, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(6);
+				}
+				curKeyState[6] = false;
 				break;
 			case KeyEvent.VK_DOWN:
-				curKeys.setKeyState(7, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[7]){
+					curKeys.setKeyState(7, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(7);
+				}
+				curKeyState[7] = false;
 				break;
 			case KeyEvent.VK_RIGHT:
-				curKeys.setKeyState(8, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[8]){
+					curKeys.setKeyState(8, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(8);
+				}
+				curKeyState[8] = false;
 				break;
 			case KeyEvent.VK_1:
-				curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[9]){
+					curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(9);
+				}
+				curKeyState[9] = false;
 				break;
 			case KeyEvent.VK_2:
-				curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[10]){
+					curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(10);
+				}
+				curKeyState[10] = false;
 				break;
 			case KeyEvent.VK_3:
-				curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[11]){
+					curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(11);
+				}
+				curKeyState[11] = false;
 				break;
 			case KeyEvent.VK_NUMPAD1:
-				curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[9]){
+					curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(9);
+				}
+				curKeyState[9] = false;
 				break;
 			case KeyEvent.VK_NUMPAD2:
-				curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[10]){
+					curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(10);
+				}
+				curKeyState[10] = false;
 				break;
 			case KeyEvent.VK_NUMPAD3:
-				curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+				if(curKeyState[11]){
+					curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
+					endEvent(11);
+				}
+				curKeyState[11] = false;
 				break;
 			default:
 				//ignore
@@ -328,6 +511,9 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 			}
 			bufDraw.drawImage(overlay, 0, 0, getWidth(), getHeight(), null);
 			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
+			for(int i = 0; i<blockLanes.length; i++){
+				blockLanes[i].paintComponent(bufDraw, getWidth(), getHeight());
+			}
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
@@ -346,7 +532,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		JFrame mainframe = new JFrame();
 		mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainframe.setSize(640,480);
-		CreationModePanel toTest = new CreationModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f);
+		CreationModePanel toTest = new CreationModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.0025f);
 		toTest.setMetronomeFrames(60);
 		toTest.setPlayerActive(0, true);
 		toTest.setPlayerActive(1, true);
