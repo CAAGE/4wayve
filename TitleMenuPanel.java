@@ -17,7 +17,13 @@ import javax.swing.JComponent;
   * This will run the first title menu of the game at runtime.
   */
 
-public class TitleMenuPanel extends JComponent implements KeyListener{
+public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
+  
+  /**
+   * The float location of the title
+   */
+  protected static final float TITLEXOFFSET = 0.01f;
+  protected static final float TITLEYOFFSET = 0.01f;
   
 	/**
 	 * The x location of the blocks in the lanes relative to lane center.
@@ -27,7 +33,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener{
 	/**
 	 * The y location of the keys.
 	 */
-	protected static final float KEYYLOC = 0.1f;
+	protected static final float KEYYLOC = 0.45f;
 	
 	/**
 	 * The width of the keys.
@@ -72,7 +78,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener{
 	/**
 	 * The rate at which the background scrolls.
 	 */
-	protected float backgroundRate;
+	protected float backgroundRate = 0.00055f;
 	
 	/**
 	 * The background image.
@@ -94,18 +100,50 @@ public class TitleMenuPanel extends JComponent implements KeyListener{
 	 */
 	protected boolean[] curPressed;
 	
-	public TitleMenuPanel(BufferedImage backgroundImage, float backScrollRate) throws IOException{
+	public TitleMenuPanel(BufferedImage backgroundImage) throws IOException{
     inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
     activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
  //setDoubleBuffered(false);
     background = backgroundImage;
     backgroundOffset = 0;
-    backgroundRate = backScrollRate;
     myLock = new ReentrantLock();
     frameNanos = 16000000;
     curPressed = new boolean[relLocs.length];
 	}
-
+  
+  /**
+   * Enable scrolling of background and frame repaints
+   */
+  public void run(){
+    while(true){
+      long frameStartTime = System.nanoTime();
+      if(active){
+        myLock.lock(); try{
+          backgroundOffset += (backgroundRate * getWidth());
+          float scrheight = (background.getHeight() * getWidth() * 1.0f) / background.getWidth();
+          if(backgroundOffset > scrheight){
+            backgroundOffset -= scrheight;
+          }
+        }finally{myLock.unlock();}
+        repaint();
+      }
+      long frameEndTime = System.nanoTime();
+			long sleepTime = frameNanos - (frameEndTime - frameStartTime);
+			if(sleepTime > 0){
+				try{
+					Thread.sleep(sleepTime / 1000000);
+				} catch(InterruptedException e){}
+			} 
+    }
+  }
+  
+  /**
+   * Activate the title page
+   */
+  public void activate(){
+    active = true;
+  }
+  
   /**
 	 * This will handle keys being pressed.
 	 * @param e The key being pressed.
@@ -161,7 +199,6 @@ public class TitleMenuPanel extends JComponent implements KeyListener{
 			//ignore
 			break;
 		}
-		repaint();
 	}
 	
 	/**
@@ -261,9 +298,12 @@ public class TitleMenuPanel extends JComponent implements KeyListener{
     JFrame mainframe = new JFrame();
     mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     mainframe.setSize(640,480);
-    TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f);
+    TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")));
+    TitlePanel.activate();
     mainframe.add(TitlePanel);
     mainframe.addKeyListener(TitlePanel);
     mainframe.setVisible(true);
+    Thread toRun = new Thread(TitlePanel);
+    toRun.start();
   }
 }
