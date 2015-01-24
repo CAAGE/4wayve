@@ -108,6 +108,11 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	protected boolean[] curKeyState;
 	
 	/**
+	 * The timer display.
+	 */
+	protected TimerDisplay curTimeDisp;
+	
+	/**
 	 * This creates a cration mode panel.
 	 * @param backgroundImage The image to display as a background.
 	 * @param backScrollRate The rate at which the background should scroll.
@@ -144,6 +149,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		blockLanes[10] = new CreationBlockChannel(startFrames.get(10), endFrames.get(10), (14.0f/16)-0.025f, blockScrollRate, 3);
 		blockLanes[11] = new CreationBlockChannel(startFrames.get(11), endFrames.get(11), (15.0f/16)-0.025f, blockScrollRate, 3);
 		curKeyState = new boolean[12];
+		curTimeDisp = new TimerDisplay();
 	}
 	
 	/**
@@ -162,6 +168,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 					for(int i = 0; i<blockLanes.length; i++){
 						blockLanes[i].setTime((SONGLENGTH) - framesRemaining);
 					}
+					curTimeDisp.setTimeRatio(1 - (1.0f * framesRemaining)/SONGLENGTH);
 				}finally{myLock.unlock();}
 				Graphics toDraw = this.getGraphics();
 				paintComponent(getGraphics());
@@ -514,6 +521,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 			for(int i = 0; i<blockLanes.length; i++){
 				blockLanes[i].paintComponent(bufDraw, getWidth(), getHeight());
 			}
+			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;

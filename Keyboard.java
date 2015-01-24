@@ -88,6 +88,8 @@ public class Keyboard{
 	/**
 	 * This will paint the keyboard.
 	 * @param g The drawing surface.
+	 * @param width The width of the drawable surface.
+	 * @param height The height of the drawable surface.
 	 */
 	public void paintComponent(Graphics g, int width, int height){
 		Graphics2D g2 = (Graphics2D)g;
