@@ -11,6 +11,9 @@ import java.awt.Graphics;
  */
 public class CreationBlockChannel{
 	
+	/**
+	 * The height of the caps.
+	 */
 	protected static final float CAPHEIGHT = 7.0f / 1080;
 	
 	/**

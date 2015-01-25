@@ -1,5 +1,9 @@
-import javax.sound.midi.InvalidMidiDataException;
+import java.awt.Graphics2D;
 
+import javax.imageio.ImageIO;
+import java.io.IOException;
+import java.awt.image.BufferedImage;
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 import java.util.List;
 import java.awt.Graphics;
@@ -9,7 +13,31 @@ import java.awt.event.KeyListener;
 
 public class PlaybackBlockChannel implements KeyListener{
 	
+	/**
+	 * The x location of the blocks in the lanes relative to lane center.
+	 */
+	protected static final float XOFFSET = -0.025f;
+	
+	/**
+	 * The width of the keys.
+	 */
+	protected static final float STONEWIDTH = 0.05f;
+	
+	/**
+	 * The relative x locations of the lanes.
+	 */
+	protected static final float[] relLocs = new float[]{1.0f/16, 2.0f/16, 3.0f/16, 5.0f/16, 6.0f/16, 7.0f/16, 9.0f/16, 10.0f/16, 11.0f/16, 13.0f/16, 14.0f/16, 15.0f/16};
+	
+	/**
+	 * The height of the caps.
+	 */
+	protected static final float CAPHEIGHT = 7.0f / 1080;
+	
+	public static final float FINALY = 0.8f;
+	
 	protected static final int FUDGEFRAMES = 6;
+	
+	protected float blockScrollRate;
 	
 	/**
 	 * Which players are currently playing.
@@ -53,9 +81,18 @@ public class PlaybackBlockChannel implements KeyListener{
 	
 	protected int[] missedFirst;
 	
-	protected int[] missedLast;
+	protected BufferedImage[] redImgs;
 	
-	public PlaybackBlockChannel(boolean[] playing, Keyboard curKeys, List<List<Long>> startFrames, List<List<Long>> endFrames, int[] instruments){
+	protected BufferedImage[] yelImgs;
+	
+	protected BufferedImage[] bluImgs;
+	
+	protected BufferedImage[] purImgs;
+	
+	protected BufferedImage[] graImgs;
+	
+	public PlaybackBlockChannel(float blockScrollRate, boolean[] playing, Keyboard curKeys, List<List<Long>> startFrames, List<List<Long>> endFrames, int[] instruments) throws IOException{
+		this.blockScrollRate = blockScrollRate;
 		this.curKeys = curKeys;
 		this.curKeyState = new boolean[12];
 		this.endFrames = endFrames;
@@ -68,12 +105,38 @@ public class PlaybackBlockChannel implements KeyListener{
 		currentlyHitting = new boolean[12];
 		currentFrames = new int[12];
 		missedFirst = new int[12];
-		missedLast = new int[12];
+		redImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomRed.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleRed.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopRed.png"))};
+		yelImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomYellow.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleYellow.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopYellow.png"))};
+		bluImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomBlue.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleBlue.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopBlue.png"))};
+		purImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomPurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddlePurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopPurple.png"))};
+		graImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopGray.png"))};
 	}
 	
 	public void update(long curFrame){
 		this.curFrame = this.curFrame;
-		//for everybody currently getting points, add points
+		for(int i = 0; i<currentlyHitting.length; i++){
+			if(nextEvent[i]>=startFrames.get(i).size()){
+				continue;
+			}
+			if(currentlyHitting[i]){
+				//check that you haven't missed the end
+				long nextEndFrame = endFrames.get(i).get(nextEvent[i]);
+				if(nextEndFrame < curFrame){
+					int offset = (int)(curFrame - nextEndFrame);
+					if(offset > FUDGEFRAMES){
+						currentlyHitting[i] = false;
+						nextEvent[i]++;
+					}
+				}
+			}
+			else{
+				//check that you haven't passed next
+				long nextStartFrame = startFrames.get(i).get(nextEvent[i]);
+				if((nextStartFrame+FUDGEFRAMES) < curFrame){
+					nextEvent[i]++;
+				}
+			}
+		}
 	}
 	
 	/**
@@ -96,7 +159,6 @@ public class PlaybackBlockChannel implements KeyListener{
 			currentlyHitting[lane] = true;
 			currentFrames[lane] = 1;
 			missedFirst[lane] = (int)offset;
-			missedLast[lane] = 0;
 			valid = true;
 		}
 		else if(curFrame > actualStart){
@@ -373,6 +435,28 @@ public class PlaybackBlockChannel implements KeyListener{
 	 * @param height The height of the drawable surface.
 	 */
 	public void paintComponent(Graphics g, int width, int height){
-		
+		Graphics2D g2 = (Graphics2D)g;
+		for(int lane = 0; lane < nextEvent.length; lane++){
+			List<Long> laneStarts = startFrames.get(lane);
+			List<Long> laneEnds = endFrames.get(lane);
+			
+			int laneX = (int)(width * (relLocs[lane] + XOFFSET));
+			int laneW = (int)(width * STONEWIDTH);
+			
+			for(int i = nextEvent[lane]+1; i<laneStarts.size(); i++){
+				
+			}
+			
+			for(int i = nextEvent[lane]-1; i>=0; i--){
+				float bulkStartY = FINALY - blockScrollRate*(laneEnds.get(i)-curFrame);
+				if(bulkStartY > (1+2*CAPHEIGHT)){
+					break;
+				}
+				float bulkEndY = FINALY - blockScrollRate*(laneStarts.get(i)-curFrame);
+				int midStartY = (int)(bulkStartY * height);
+				int midHeight = (int)((bulkEndY - bulkStartY) * height);
+				g2.drawImage(graImgs[1], laneX, midStartY, laneW, midHeight, null);
+			}
+		}
 	}
 }
