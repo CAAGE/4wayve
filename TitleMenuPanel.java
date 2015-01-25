@@ -3,6 +3,8 @@ import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
@@ -17,7 +19,7 @@ import javax.swing.JComponent;
   * This will run the first title menu of the game at runtime.
   */
 
-public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
+public class TitleMenuPanel extends JComponent implements KeyListener, MouseListener, Runnable{
   
   /**
    * The float location of the title
@@ -78,7 +80,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	/**
 	 * The rate at which the background scrolls.
 	 */
-	protected float backgroundRate = 0.00025f;
+	protected static final float backgroundRate = 0.00025f;
 	
 	/**
 	 * The background image.
@@ -96,6 +98,15 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	protected BufferedImage activeKey;
 	
 	/**
+	 * The image for the logo / title
+	 */
+	protected BufferedImage title;
+	protected static final float WIDTITLE = 0.6f;
+	protected static final float HEITITLE = 0.3f;
+	protected static final float XLOCTITLE = 0.05f;
+	protected static final float YLOCTITLE = 0.05f;
+	
+	/**
 	 * Which keys are currently pressed.
 	 */
 	protected boolean[] curPressed;
@@ -108,7 +119,8 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	public TitleMenuPanel(BufferedImage backgroundImage) throws IOException{
     inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
     activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
- //setDoubleBuffered(false);
+    title = ImageIO.read(ClassLoader.getSystemResource("images/logo.png"));
+   setDoubleBuffered(false);
     background = backgroundImage;
     backgroundOffset = 0;
     myLock = new ReentrantLock();
@@ -270,6 +282,39 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	 */
 	public void keyTyped(KeyEvent e){}
 
+	/**
+   * Send this ID to the parent to trigger a state change
+   * @param e The mouse event that occured
+   */
+  public void mouseClicked(MouseEvent e){}
+  
+  /**
+   * Ignore mouse pressed
+   * @param e The mouse event that occured
+   */
+  public void mousePressed(MouseEvent e){titleMenuOver.setTrans(true, e.getX(), getWidth());}
+  
+  /**
+   * Ignore mouse release
+   * @param e The mouse event that occured
+   */
+  public void mouseReleased(MouseEvent e){titleMenuOver.setTrans(false, e.getX(), getWidth());}
+  
+  /**
+   * Add highlight when mouse enters
+   * @param e The mouse event that occured
+   */
+  public void mouseEntered(MouseEvent e){}
+  
+  /**
+   * Remove highlight when mouse leaves
+   * @param e The mouse event that occured
+   */
+  public void mouseExited(MouseEvent e){}
+
+  /**
+   *
+   */
   protected void paintComponent(Graphics g){
     myLock.lock(); try{
       if(buffer == null || buffer.getWidth()!=getWidth() || buffer.getHeight()!=getHeight()){
@@ -291,9 +336,12 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
         bufDraw.drawImage(curPressed[i] ? activeKey : inactiveKey, xloc, yloc, wid, hig, null);
 			}
 			
-			
-titleMenuOver.repaint();
-			
+			int xLoc = (int)(XLOCTITLE * getWidth());
+			int yLoc = (int)(YLOCTITLE * getHeight());
+			int wid = (int)(WIDTITLE * getWidth());
+			int hig = (int)(HEITITLE * getHeight());
+			bufDraw.drawImage(title, xLoc, yLoc, wid, hig, null);
+			titleMenuOver.paintComponent(bufDraw, getWidth(), getHeight());
 			
 			bufDraw.dispose();
 			
@@ -313,6 +361,7 @@ titleMenuOver.repaint();
     TitlePanel.activate();
     mainframe.add(TitlePanel);
     mainframe.addKeyListener(TitlePanel);
+    mainframe.addMouseListener(TitlePanel);
     mainframe.setVisible(true);
     Thread toRun = new Thread(TitlePanel);
     toRun.start();
