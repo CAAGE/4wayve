@@ -119,6 +119,8 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	protected PlaybackBlockChannel curBlocks;
 	
+	protected Score[] playerScores;
+	
 	/**
 	 * This creates a cration mode panel.
 	 * @param backgroundImage The image to display as a background.
@@ -139,6 +141,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 		playing = new boolean[4];
 		curKeyState = new boolean[12];
 		curTimeDisp = new TimerDisplay();
+		playerScores = new Score[]{new Score(0.225f), new Score(0.475f), new Score(0.725f), new Score(0.975f)};
 	}
 	
 	/**
@@ -175,7 +178,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 			int[] tmpinstruments = (int[])(trackData[0]);
 			List<List<Long>> tmpstartFrames = (List<List<Long>>)(trackData[1]);
 			List<List<Long>> tmpendFrames = (List<List<Long>>)(trackData[2]);
-			curFrame = -60;
+			curFrame = -360;
 			lastFrame = 0;
 			for(List<Long> cur : tmpendFrames){
 				if(cur.size()>0 && cur.get(cur.size()-1) > lastFrame){
@@ -230,7 +233,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 				endFrames.set(3*toAssign+2, new ArrayList<>(tmpendFrames.get(3*maxTrks+2)));
 			}
 			//create block manager
-			curBlocks = new PlaybackBlockChannel(blockRate, playing, curKeys, startFrames, endFrames, instruments);
+			curBlocks = new PlaybackBlockChannel(blockRate, playing, curKeys, startFrames, endFrames, instruments, playerScores);
+			playerScores[0].setScore(0);
+			playerScores[1].setScore(0);
+			playerScores[2].setScore(0);
+			playerScores[3].setScore(0);
 			active = true;
 		}finally{myLock.unlock();}
 	}
@@ -328,6 +335,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 			}
 			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
 			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
+			for(int i = 0; i<playing.length; i++){
+				if(playing[i]){
+					playerScores[i].paintComponent(bufDraw, getWidth(), getHeight());
+				}
+			}
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
@@ -346,7 +358,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 		JFrame mainframe = new JFrame();
 		mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainframe.setSize(640,480);
-		PlaybackModePanel toTest = new PlaybackModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.0025f);
+		PlaybackModePanel toTest = new PlaybackModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.005f);
 		toTest.setPlayerActive(0, true);
 		toTest.setPlayerActive(1, true);
 		toTest.setPlayerActive(2, true);
