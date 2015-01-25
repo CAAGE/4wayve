@@ -167,7 +167,11 @@ public class TitleMenuPanel extends JComponent implements MouseListener, Runnabl
    * Ignore mouse pressed
    * @param e The mouse event that occured
    */
-  public void mousePressed(MouseEvent e){titleMenuOver.setTrans(true, e.getX(), getWidth());}
+  public void mousePressed(MouseEvent e){
+    if(active){
+      titleMenuOver.setTrans(true, e.getX(), getWidth());
+    }
+  }
   
   /**
    * Ignore mouse release
@@ -191,8 +195,8 @@ public class TitleMenuPanel extends JComponent implements MouseListener, Runnabl
       }
       else if(currentState == 2){
         layout.show(cards, CARD[3]);
-        CreditPanel.activate();
         active = false;
+        CreditPanel.activate();
       }
       else{System.exit(0);}
     }
@@ -290,6 +294,7 @@ public class TitleMenuPanel extends JComponent implements MouseListener, Runnabl
     
     CreditPanel = new Credits(ImageIO.read(ClassLoader.getSystemResource("images/credits.png")), -300f);
     mainframe.addMouseListener(CreditPanel);
+    mainframe.addKeyListener(CreditPanel);
     
     cards.add(TitlePanel, CARD[0]);
     cards.add(CreatePanel, CARD[1]);

@@ -3,7 +3,9 @@ import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseListener;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
@@ -18,7 +20,7 @@ import javax.swing.JComponent;
   * This will run the credits when that option is selected.
   */
 
-public class Credits extends JComponent implements MouseListener, Runnable{
+public class Credits extends JComponent implements MouseListener, KeyListener, Runnable{
 	/**
 	 * The second buffer of this panel.
 	 */
@@ -118,6 +120,16 @@ public class Credits extends JComponent implements MouseListener, Runnable{
   public void activate(){
     active = true;
   }
+  
+  public void keyPressed(KeyEvent e){}
+  
+  public void keyTyped(KeyEvent e){}
+  
+  public void keyReleased(KeyEvent e){
+    TitleMenuPanel.showMenu();
+    active = false;
+  }
+  
 	/**
    * Send this ID to the parent to trigger a state change
    * @param e The mouse event that occured
@@ -136,7 +148,7 @@ public class Credits extends JComponent implements MouseListener, Runnable{
    */
   public void mouseReleased(MouseEvent e){
     titleMenuOver.setTrans(false, e.getX(), getWidth());
-    TitleMenuPanel.showMenu();
+    //TitleMenuPanel.showMenu();
   }
   
   /**
