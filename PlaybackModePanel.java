@@ -60,11 +60,6 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	protected float backgroundRate;
 	
 	/**
-	 * The rate at which the blocks scroll.
-	 */
-	protected float blockRate;
-	
-	/**
 	 * The background image.
 	 */
 	protected BufferedImage background;
@@ -133,7 +128,6 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 		background = backgroundImage;
 		backgroundOffset = 0;
 		backgroundRate = backScrollRate;
-		this.blockRate = blockScrollRate;
 		myLock = new ReentrantLock();
 		frameNanos = 16000000;
 		playing = new boolean[4];
@@ -230,7 +224,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 				endFrames.add(3*toAssign+2, new ArrayList<>(tmpendFrames.get(3*maxTrks+2)));
 			}
 			//create block manager
-			curBlocks = new PlaybackBlockChannel(blockRate, playing, curKeys, startFrames, endFrames, instruments);
+			curBlocks = new PlaybackBlockChannel(playing, curKeys, startFrames, endFrames, instruments);
 			active = true;
 		}finally{myLock.unlock();}
 	}
