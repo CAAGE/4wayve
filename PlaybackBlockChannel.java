@@ -1,5 +1,4 @@
 import java.awt.Graphics2D;
-
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.awt.image.BufferedImage;
@@ -10,7 +9,9 @@ import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-
+/**
+ * This will draw blocks and handle key presses for playback.
+ */
 public class PlaybackBlockChannel implements KeyListener{
 	
 	/**
@@ -33,10 +34,19 @@ public class PlaybackBlockChannel implements KeyListener{
 	 */
 	protected static final float CAPHEIGHT = 7.0f / 1080;
 	
+	/**
+	 * The ending y location.
+	 */
 	public static final float FINALY = 0.8f;
 	
+	/**
+	 * The amount of frames to allow the player around the leading and trailing edges.
+	 */
 	protected static final int FUDGEFRAMES = 6;
 	
+	/**
+	 * The rate at which blocks scroll.
+	 */
 	protected float blockScrollRate;
 	
 	/**
@@ -69,28 +79,75 @@ public class PlaybackBlockChannel implements KeyListener{
 	 */
 	protected int[] instruments;
 	
+	/**
+	 * The current frame in the song.
+	 */
 	protected long curFrame;
 	
+	/**
+	 * The index of the next event for each lane.
+	 */
 	protected int[] nextEvent;
 	
+	/**
+	 * The amount of points each lane has garnered.
+	 */
 	protected int[] currentPoints;
 	
+	/**
+	 * Whether each lane is currently hitting a note.
+	 */
 	protected boolean[] currentlyHitting;
 	
+	/**
+	 * The number of held frames on the current note.
+	 */
 	protected int[] currentFrames;
 	
+	/**
+	 * How many frames were missed on the leading edge.
+	 */
 	protected int[] missedFirst;
 	
+	/**
+	 * The red images.
+	 */
 	protected BufferedImage[] redImgs;
 	
+	/**
+	 * The yellow images.
+	 */
 	protected BufferedImage[] yelImgs;
 	
+	/**
+	 * The blue images.
+	 */
 	protected BufferedImage[] bluImgs;
 	
+	/**
+	 * The purple images.
+	 */
 	protected BufferedImage[] purImgs;
 	
+	/**
+	 * The gray blocks.
+	 */
 	protected BufferedImage[] graImgs;
 	
+	/**
+	 * The blocks for each player.
+	 */
+	protected BufferedImage[][] colImgs;
+	
+	/**
+	 * This loads images for drawing blocks.
+	 * @param blockScrollRate The rate at which blocks scroll.
+	 * @param playing The currently active players.
+	 * @param curKeys The keyboard drawing library.
+	 * @param startFrames The starting frames of the songs for each player.
+	 * @param endFrames The ending frames of the songs for each player.
+	 * @param instruments The instruments to play for each player.
+	 */
 	public PlaybackBlockChannel(float blockScrollRate, boolean[] playing, Keyboard curKeys, List<List<Long>> startFrames, List<List<Long>> endFrames, int[] instruments) throws IOException{
 		this.blockScrollRate = blockScrollRate;
 		this.curKeys = curKeys;
@@ -110,10 +167,15 @@ public class PlaybackBlockChannel implements KeyListener{
 		bluImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomBlue.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleBlue.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopBlue.png"))};
 		purImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomPurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddlePurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopPurple.png"))};
 		graImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopGray.png"))};
+		colImgs = new BufferedImage[][]{redImgs, yelImgs, bluImgs, purImgs};
 	}
 	
+	/**
+	 * This will update scores for currently pressed keys.
+	 * @param curFrame The current frame of the song.
+	 */
 	public void update(long curFrame){
-		this.curFrame = this.curFrame;
+		this.curFrame = curFrame;
 		for(int i = 0; i<currentlyHitting.length; i++){
 			if(nextEvent[i]>=startFrames.get(i).size()){
 				continue;
@@ -180,6 +242,7 @@ public class PlaybackBlockChannel implements KeyListener{
 			long actualEnd = endFrames.get(lane).get(nextEvent[lane]).longValue();
 			long offset = Math.abs(actualEnd - curFrame);
 			if(offset < FUDGEFRAMES){
+				currentFrames[lane]++;
 				float multiplier = (1-(offset * 1.0f / FUDGEFRAMES))*(1-(missedFirst[lane] * 1.0f / FUDGEFRAMES));
 				currentPoints[lane] += (int)(currentFrames[lane] * multiplier);
 			}
@@ -444,7 +507,14 @@ public class PlaybackBlockChannel implements KeyListener{
 			int laneW = (int)(width * STONEWIDTH);
 			
 			for(int i = nextEvent[lane]+1; i<laneStarts.size(); i++){
-				
+				float bulkStartY = FINALY - blockScrollRate*(laneEnds.get(i)-curFrame);
+				float bulkEndY = FINALY - blockScrollRate*(laneStarts.get(i)-curFrame);
+				if(bulkEndY < (-2*CAPHEIGHT)){
+					break;
+				}
+				int midStartY = (int)(bulkStartY * height);
+				int midHeight = (int)((bulkEndY - bulkStartY) * height);
+				g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeight, null);
 			}
 			
 			for(int i = nextEvent[lane]-1; i>=0; i--){

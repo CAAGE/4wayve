@@ -209,7 +209,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 					break;
 				}
 				int toAssign = missing.get(rand.nextInt(missing.size()));
-				int maxNotes = 0;
+				int maxNotes = -1;
 				int maxTrks = 0;
 				for(int i = 0; i<assigned.length; i++){
 					if(!assigned[i]){
@@ -223,11 +223,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 				assigned[maxTrks] = true;
 				instruments[toAssign] = tmpinstruments[maxTrks];
 				startFrames.set(3*toAssign, new ArrayList<>(tmpstartFrames.get(3*maxTrks)));
-				startFrames.add(3*toAssign+1, new ArrayList<>(tmpstartFrames.get(3*maxTrks+1)));
-				startFrames.add(3*toAssign+2, new ArrayList<>(tmpstartFrames.get(3*maxTrks+2)));
-				endFrames.add(3*toAssign, new ArrayList<>(tmpendFrames.get(3*maxTrks)));
-				endFrames.add(3*toAssign+1, new ArrayList<>(tmpendFrames.get(3*maxTrks+1)));
-				endFrames.add(3*toAssign+2, new ArrayList<>(tmpendFrames.get(3*maxTrks+2)));
+				startFrames.set(3*toAssign+1, new ArrayList<>(tmpstartFrames.get(3*maxTrks+1)));
+				startFrames.set(3*toAssign+2, new ArrayList<>(tmpstartFrames.get(3*maxTrks+2)));
+				endFrames.set(3*toAssign, new ArrayList<>(tmpendFrames.get(3*maxTrks)));
+				endFrames.set(3*toAssign+1, new ArrayList<>(tmpendFrames.get(3*maxTrks+1)));
+				endFrames.set(3*toAssign+2, new ArrayList<>(tmpendFrames.get(3*maxTrks+2)));
 			}
 			//create block manager
 			curBlocks = new PlaybackBlockChannel(blockRate, playing, curKeys, startFrames, endFrames, instruments);
@@ -323,11 +323,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 				cury += scrheight;
 			}
 			bufDraw.drawImage(overlay, 0, 0, getWidth(), getHeight(), null);
-			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
-			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
 			if(curBlocks!=null){
 				curBlocks.paintComponent(bufDraw, getWidth(), getHeight());
 			}
+			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
+			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
