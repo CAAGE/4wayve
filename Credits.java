@@ -126,8 +126,10 @@ public class Credits extends JComponent implements MouseListener, KeyListener, R
   public void keyTyped(KeyEvent e){}
   
   public void keyReleased(KeyEvent e){
-    TitleMenuPanel.showMenu();
-    active = false;
+    if(active){
+      TitleMenuPanel.showMenu();
+      active = false;
+    }
   }
   
 	/**
@@ -140,14 +142,20 @@ public class Credits extends JComponent implements MouseListener, KeyListener, R
    * Ignore mouse pressed
    * @param e The mouse event that occured
    */
-  public void mousePressed(MouseEvent e){titleMenuOver.setTrans(true, e.getX(), getWidth());}
+  public void mousePressed(MouseEvent e){
+    if(active){
+      titleMenuOver.setTrans(true, e.getX(), getWidth());
+    }
+  }
   
   /**
    * Ignore mouse release
    * @param e The mouse event that occured
    */
   public void mouseReleased(MouseEvent e){
-    titleMenuOver.setTrans(false, e.getX(), getWidth());
+    if(active){
+      titleMenuOver.setTrans(false, e.getX(), getWidth());
+    }
   }
   
   /**
