@@ -2,7 +2,6 @@ import java.awt.event.KeyEvent;
 import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.GraphicsEnvironment;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -13,13 +12,26 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JComponent;
+import java.awt.CardLayout;
 
 /**
   * This will run the first title menu of the game at runtime.
   */
 
-public class TitleMenuPanel extends JComponent implements KeyListener, MouseListener, Runnable{
+public class TitleMenuPanel extends JComponent implements MouseListener, Runnable{
+  /**
+   * Array to keep cards understandable
+   */
+  protected static final String[] CARD = new String[]{"Title","Create","Play","Credits"};
+  protected static CardLayout layout;
+  protected static JPanel cards;
+  protected static TitleMenuPanel TitlePanel;
+  protected static CreationModePanel CreatePanel;
+  protected static PlaybackModePanel PlayPanel;
+  protected static Credits CreditPanel;
+
 	/**
 	 * The second buffer of this panel.
 	 */
@@ -85,6 +97,11 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	protected MenuOverlay titleMenuOver;
 	
 	/**
+	 * State change variable to determine card changes
+	 */
+	protected int currentState;
+	
+	/**
 	 * Constructor, set up buffered images and start-up offsets
 	 * @param backgroundImage The image displayed in the background
 	 * @param currOffset The current y offset of the background
@@ -139,126 +156,6 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
   public void activate(){
     active = true;
   }
-  
-  /**
-	 * This will handle keys being pressed.
-	 * @param e The key being pressed.
-	 */
-	public void keyPressed(KeyEvent e){
-		switch (e.getKeyCode()) {
-		case KeyEvent.VK_A:
-			curPressed[0] = true;
-			break;
-		case KeyEvent.VK_S:
-			curPressed[1] = true;
-			break;
-		case KeyEvent.VK_D:
-			curPressed[2] = true;
-			break;
-		case KeyEvent.VK_J:
-			curPressed[3] = true;
-			break;
-		case KeyEvent.VK_K:
-			curPressed[4] = true;
-			break;
-		case KeyEvent.VK_L:
-			curPressed[5] = true;
-			break;
-		case KeyEvent.VK_LEFT:
-			curPressed[6] = true;
-			break;
-		case KeyEvent.VK_DOWN:
-			curPressed[7] = true;
-			break;
-		case KeyEvent.VK_RIGHT:
-			curPressed[8] = true;
-			break;
-		case KeyEvent.VK_1:
-			curPressed[9] = true;
-			break;
-		case KeyEvent.VK_2:
-			curPressed[10] = true;
-			break;
-		case KeyEvent.VK_3:
-			curPressed[11] = true;
-			break;
-		case KeyEvent.VK_NUMPAD1:
-			curPressed[9] = true;
-			break;
-		case KeyEvent.VK_NUMPAD2:
-			curPressed[10] = true;
-			break;
-		case KeyEvent.VK_NUMPAD3:
-			curPressed[11] = true;
-			break;
-		default:
-			//ignore
-			break;
-		}
-	}
-	
-	/**
-	 * This will handle keys being let go.
-	 * @param e The key being released.
-	 */
-	public void keyReleased(KeyEvent e){
-		switch (e.getKeyCode()) {
-		case KeyEvent.VK_A:
-			curPressed[0] = false;
-			break;
-		case KeyEvent.VK_S:
-			curPressed[1] = false;
-			break;
-		case KeyEvent.VK_D:
-			curPressed[2] = false;
-			break;
-		case KeyEvent.VK_J:
-			curPressed[3] = false;
-			break;
-		case KeyEvent.VK_K:
-			curPressed[4] = false;
-			break;
-		case KeyEvent.VK_L:
-			curPressed[5] = false;
-			break;
-		case KeyEvent.VK_LEFT:
-			curPressed[6] = false;
-			break;
-		case KeyEvent.VK_DOWN:
-			curPressed[7] = false;
-			break;
-		case KeyEvent.VK_RIGHT:
-			curPressed[8] = false;
-			break;
-		case KeyEvent.VK_1:
-			curPressed[9] = false;
-			break;
-		case KeyEvent.VK_2:
-			curPressed[10] = false;
-			break;
-		case KeyEvent.VK_3:
-			curPressed[11] = false;
-			break;
-		case KeyEvent.VK_NUMPAD1:
-			curPressed[9] = false;
-			break;
-		case KeyEvent.VK_NUMPAD2:
-			curPressed[10] = false;
-			break;
-		case KeyEvent.VK_NUMPAD3:
-			curPressed[11] = false;
-			break;
-		default:
-			//ignore
-			break;
-		}
-	}
-	
-	/**
-	 * This ignores typing events.
-	 * @param e The key being typed.
-	 */
-	public void keyTyped(KeyEvent e){}
 
 	/**
    * Send this ID to the parent to trigger a state change
@@ -276,7 +173,30 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
    * Ignore mouse release
    * @param e The mouse event that occured
    */
-  public void mouseReleased(MouseEvent e){titleMenuOver.setTrans(false, e.getX(), getWidth());}
+  public void mouseReleased(MouseEvent e){
+    if(active){
+      currentState = titleMenuOver.setTrans(false, e.getX(), getWidth());
+      if(currentState == 0){
+        layout.show(cards, CARD[1]);
+        CreatePanel.activate();
+        active = false;
+      }
+      else if(currentState == 1){
+        layout.show(cards, CARD[2]);
+        boolean valid = true;
+        try{
+          PlayPanel.playSong();
+        } catch(IOException exc){valid=false;}
+        active = !valid;
+      }
+      else if(currentState == 2){
+        layout.show(cards, CARD[3]);
+        CreditPanel.activate();
+        active = false;
+      }
+      else{System.exit(0);}
+    }
+  }
   
   /**
    * Add highlight when mouse enters
@@ -335,18 +255,58 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 			g2.dispose();
     }finally{myLock.unlock();}
   }
+  
+  public static void showMenu(){
+    TitlePanel.activate();
+    layout.show(cards, CARD[0]);
+  }
 
   public static void main(String args[]) throws IOException{
     JFrame mainframe = new JFrame("4Way(ve)");
     mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     mainframe.setSize(640,480);
-    TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0f);
+    
+    cards = new JPanel();
+    layout = new CardLayout();
+    cards.setLayout(layout);
+    
+    TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0f);
     TitlePanel.activate();
-    mainframe.add(TitlePanel);
-    mainframe.addKeyListener(TitlePanel);
+    
+    CreatePanel = new CreationModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.005f);
+    CreatePanel.setMetronomeFrames(60);
+    CreatePanel.setPlayerActive(0, true);
+    CreatePanel.setPlayerActive(1, true);
+    CreatePanel.setPlayerActive(2, true);
+    CreatePanel.setPlayerActive(3, true);
+    mainframe.addKeyListener(CreatePanel);
+    
+    PlayPanel = new PlaybackModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.005f);
+    PlayPanel.setPlayerActive(0, true);
+    PlayPanel.setPlayerActive(1, true);
+    PlayPanel.setPlayerActive(2, true);
+    PlayPanel.setPlayerActive(3, true);
+    mainframe.addKeyListener(PlayPanel);
+    
+    CreditPanel = new Credits(ImageIO.read(ClassLoader.getSystemResource("images/credits.png")), -300f);
+    mainframe.addMouseListener(CreditPanel);
+    
+    cards.add(TitlePanel, CARD[0]);
+    cards.add(CreatePanel, CARD[1]);
+    cards.add(PlayPanel, CARD[2]);
+    cards.add(CreditPanel, CARD[3]);
+    
+    mainframe.add(cards);
+    
     mainframe.addMouseListener(TitlePanel);
     mainframe.setVisible(true);
     Thread toRun = new Thread(TitlePanel);
     toRun.start();
+    Thread toRunCreate = new Thread(CreatePanel);
+    toRunCreate.start();
+    Thread toRunPlay = new Thread(PlayPanel);
+    toRunPlay.start();
+    Thread toRunCredit = new Thread(CreditPanel);
+    toRunCredit.start();
   }
 }

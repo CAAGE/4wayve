@@ -288,6 +288,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 				curFrame++;
 				if(curFrame == lastFrame){
 					active = false;
+					TitleMenuPanel.showMenu();
 				}
 			}
 			long frameEndTime = System.nanoTime();

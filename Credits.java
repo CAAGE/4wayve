@@ -134,7 +134,10 @@ public class Credits extends JComponent implements MouseListener, Runnable{
    * Ignore mouse release
    * @param e The mouse event that occured
    */
-  public void mouseReleased(MouseEvent e){titleMenuOver.setTrans(false, e.getX(), getWidth());}
+  public void mouseReleased(MouseEvent e){
+    titleMenuOver.setTrans(false, e.getX(), getWidth());
+    TitleMenuPanel.showMenu();
+  }
   
   /**
    * Add highlight when mouse enters
