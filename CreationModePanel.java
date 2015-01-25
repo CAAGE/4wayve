@@ -196,25 +196,33 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 					JFileChooser toSelMid = new JFileChooser();
 					//toSelTrk.setFileFilter(new FileNameExtensionFilter("Midi files.", "mid"));
 					toSelMid.setFileSelectionMode(JFileChooser.FILES_ONLY);
-					int midRes = toSelMid.showSaveDialog(this);
-					try{
-						if(trkRes == JFileChooser.APPROVE_OPTION){
-							File trackFile = toSelTrk.getSelectedFile();
-							if(!trackFile.getAbsolutePath().endsWith(".trk")){
-								trackFile = new File(trackFile + ".trk");
-							}
-							AudioEventPlayer.saveEventFile(trackFile, instruments, startFrames, endFrames);
-						}
-						if(midRes == JFileChooser.APPROVE_OPTION){
-							File midFile = toSelMid.getSelectedFile();
-							if(!midFile.getAbsolutePath().endsWith(".mid")){
-								midFile = new File(midFile + ".mid");
-							}
-							AudioEventPlayer.generateMidiFile(midFile, instruments, startFrames, endFrames);
-						}
-					} catch(IOException|InvalidMidiDataException e){e.printStackTrace();}
-					
+					//int midRes = toSelMid.showSaveDialog(this);
 					myLock.lock(); try{
+						//check that the final notes are ended
+						for(int lane = 0; lane < endFrames.size(); lane++){
+							if(endFrames.get(lane).size()==0){
+								continue;
+							}
+							if(endFrames.get(lane).get(endFrames.get(lane).size()-1) < 0){
+								endFrames.get(lane).set(endFrames.get(lane).size()-1, Long.valueOf(SONGLENGTH));
+							}
+						}
+						try{
+							if(trkRes == JFileChooser.APPROVE_OPTION){
+								File trackFile = toSelTrk.getSelectedFile();
+								if(!trackFile.getAbsolutePath().endsWith(".trk")){
+									trackFile = new File(trackFile + ".trk");
+								}
+								AudioEventPlayer.saveEventFile(trackFile, instruments, startFrames, endFrames);
+							}
+//							if(midRes == JFileChooser.APPROVE_OPTION){
+//								File midFile = toSelMid.getSelectedFile();
+//								if(!midFile.getAbsolutePath().endsWith(".mid")){
+//									midFile = new File(midFile + ".mid");
+//								}
+//								AudioEventPlayer.generateMidiFile(midFile, instruments, startFrames, endFrames);
+//							}
+						} catch(IOException e){e.printStackTrace();}
 						//clear the lists
 						startFrames.get(0).clear();
 						startFrames.get(1).clear();
