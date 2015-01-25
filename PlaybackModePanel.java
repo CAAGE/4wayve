@@ -1,3 +1,6 @@
+import java.util.Random;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
@@ -107,6 +110,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	protected TimerDisplay curTimeDisp;
 	
 	/**
+	 * The block manager.
+	 */
+	protected PlaybackBlockChannel curBlocks;
+	
+	/**
 	 * This creates a cration mode panel.
 	 * @param backgroundImage The image to display as a background.
 	 * @param backScrollRate The rate at which the background should scroll.
@@ -158,17 +166,65 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	public void playSong(File toLoad) throws IOException{
 		myLock.lock(); try{
 			Object[] trackData = AudioEventPlayer.readEventFile(toLoad);
-			instruments = (int[])(trackData[0]);
-			startFrames = (List<List<Long>>)(trackData[1]);
-			endFrames = (List<List<Long>>)(trackData[2]);
+			int[] tmpinstruments = (int[])(trackData[0]);
+			List<List<Long>> tmpstartFrames = (List<List<Long>>)(trackData[1]);
+			List<List<Long>> tmpendFrames = (List<List<Long>>)(trackData[2]);
 			curFrame = -60;
 			lastFrame = 0;
-			for(List<Long> cur : endFrames){
+			for(List<Long> cur : tmpendFrames){
 				if(cur.size()>0 && cur.get(cur.size()-1) > lastFrame){
 					lastFrame = cur.get(cur.size()-1);
 				}
 			}
 			lastFrame += 60;
+			//randomize tracks
+			Random rand = new Random();
+			instruments = new int[4];
+			for(int i = 0; i<instruments.length; i++){
+				instruments[i] = playing[i] ? -1 : 0;
+			}
+			startFrames = new ArrayList<>();
+			endFrames = new ArrayList<>();
+			for(int i = 0; i<12; i++){
+				startFrames.add(new ArrayList<>());
+				endFrames.add(new ArrayList<>());
+			}
+			boolean[] assigned = new boolean[4];
+			boolean foundAll = false;
+			while(!foundAll){
+				List<Integer> missing = new ArrayList<>();
+				for(int i = 0; i<instruments.length; i++){
+					if(instruments[i] < 0){
+						missing.add(i);
+					}
+				}
+				if(missing.size()==0){
+					foundAll = true;
+					break;
+				}
+				int toAssign = missing.get(rand.nextInt(missing.size()));
+				int maxNotes = 0;
+				int maxTrks = 0;
+				for(int i = 0; i<assigned.length; i++){
+					if(!assigned[i]){
+						int notes = tmpstartFrames.get(3*i).size() + tmpstartFrames.get(3*i+1).size() + tmpstartFrames.get(3*i+2).size();
+						if(notes > maxNotes){
+							maxNotes = notes;
+							maxTrks = i;
+						}
+					}
+				}
+				assigned[maxTrks] = true;
+				instruments[toAssign] = tmpinstruments[maxTrks];
+				startFrames.set(3*toAssign, new ArrayList<>(tmpstartFrames.get(3*maxTrks)));
+				startFrames.add(3*toAssign+1, new ArrayList<>(tmpstartFrames.get(3*maxTrks+1)));
+				startFrames.add(3*toAssign+2, new ArrayList<>(tmpstartFrames.get(3*maxTrks+2)));
+				endFrames.add(3*toAssign, new ArrayList<>(tmpendFrames.get(3*maxTrks)));
+				endFrames.add(3*toAssign+1, new ArrayList<>(tmpendFrames.get(3*maxTrks+1)));
+				endFrames.add(3*toAssign+2, new ArrayList<>(tmpendFrames.get(3*maxTrks+2)));
+			}
+			//create block manager
+			curBlocks = new PlaybackBlockChannel(playing, curKeys, startFrames, endFrames, instruments);
 			active = true;
 		}finally{myLock.unlock();}
 	}
@@ -192,6 +248,9 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 					else{
 						curTimeDisp.setTimeRatio(0);
 					}
+					if(curBlocks!=null){
+						curBlocks.update(curFrame);
+					}
 				} finally{myLock.unlock();}
 				Graphics toDraw = this.getGraphics();
 				paintComponent(getGraphics());
@@ -211,136 +270,13 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	}
 	
 	/**
-	 * This will start a key press event.
-	 * @param lane The lane that should start playing.
-	 */
-	protected void startEvent(int lane){
-		
-	}
-	
-	/**
-	 * This will end a key press event.
-	 * @param lane The lane that should stop playing.
-	 */
-	protected void endEvent(int lane){
-		
-	}
-	
-	/**
 	 * This will handle keys being pressed.
 	 * @param e The key being pressed.
 	 */
 	public void keyPressed(KeyEvent e){
 		myLock.lock(); try{
-			switch (e.getKeyCode()) {
-			case KeyEvent.VK_A:
-				if(!curKeyState[0]){
-					curKeys.setKeyState(0, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(0);
-				}
-				curKeyState[0] = true;
-				break;
-			case KeyEvent.VK_S:
-				if(!curKeyState[1]){
-					curKeys.setKeyState(1, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(1);
-				}
-				curKeyState[1] = true;
-				break;
-			case KeyEvent.VK_D:
-				if(!curKeyState[2]){
-					curKeys.setKeyState(2, playing[0] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(2);
-				}
-				curKeyState[2] = true;
-				break;
-			case KeyEvent.VK_J:
-				if(!curKeyState[3]){
-					curKeys.setKeyState(3, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(3);
-				}
-				curKeyState[3] = true;
-				break;
-			case KeyEvent.VK_K:
-				if(!curKeyState[4]){
-					curKeys.setKeyState(4, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(4);
-				}
-				curKeyState[4] = true;
-				break;
-			case KeyEvent.VK_L:
-				if(!curKeyState[5]){
-					curKeys.setKeyState(5, playing[1] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(5);
-				}
-				curKeyState[5] = true;
-				break;
-			case KeyEvent.VK_LEFT:
-				if(!curKeyState[6]){
-					curKeys.setKeyState(6, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(6);
-				}
-				curKeyState[6] = true;
-				break;
-			case KeyEvent.VK_DOWN:
-				if(!curKeyState[7]){
-					curKeys.setKeyState(7, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(7);
-				}
-				curKeyState[7] = true;
-				break;
-			case KeyEvent.VK_RIGHT:
-				if(!curKeyState[8]){
-					curKeys.setKeyState(8, playing[2] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(8);
-				}
-				curKeyState[8] = true;
-				break;
-			case KeyEvent.VK_1:
-				if(!curKeyState[9]){
-					curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(9);
-				}
-				curKeyState[9] = true;
-				break;
-			case KeyEvent.VK_2:
-				if(!curKeyState[10]){
-					curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(10);
-				}
-				curKeyState[10] = true;
-				break;
-			case KeyEvent.VK_3:
-				if(!curKeyState[11]){
-					curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(11);
-				}
-				curKeyState[11] = true;
-				break;
-			case KeyEvent.VK_NUMPAD1:
-				if(!curKeyState[9]){
-					curKeys.setKeyState(9, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(9);
-				}
-				curKeyState[9] = true;
-				break;
-			case KeyEvent.VK_NUMPAD2:
-				if(!curKeyState[10]){
-					curKeys.setKeyState(10, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(10);
-				}
-				curKeyState[10] = true;
-				break;
-			case KeyEvent.VK_NUMPAD3:
-				if(!curKeyState[11]){
-					curKeys.setKeyState(11, playing[3] ? Keyboard.ACTIVE : Keyboard.INVISIBLE);
-					startEvent(11);
-				}
-				curKeyState[11] = true;
-				break;
-			default:
-				//ignore
-				break;
+			if(curBlocks!=null){
+				curBlocks.keyPressed(e);
 			}
 		} finally{myLock.unlock();}
 	}
@@ -351,115 +287,8 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	public void keyReleased(KeyEvent e){
 		myLock.lock(); try{
-			switch (e.getKeyCode()) {
-			case KeyEvent.VK_A:
-				if(curKeyState[0]){
-					curKeys.setKeyState(0, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(0);
-				}
-				curKeyState[0] = false;
-				break;
-			case KeyEvent.VK_S:
-				if(curKeyState[1]){
-					curKeys.setKeyState(1, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(1);
-				}
-				curKeyState[1] = false;
-				break;
-			case KeyEvent.VK_D:
-				if(curKeyState[2]){
-					curKeys.setKeyState(2, playing[0] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(2);
-				}
-				curKeyState[2] = false;
-				break;
-			case KeyEvent.VK_J:
-				if(curKeyState[3]){
-					curKeys.setKeyState(3, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(3);
-				}
-				curKeyState[3] = false;
-				break;
-			case KeyEvent.VK_K:
-				if(curKeyState[4]){
-					curKeys.setKeyState(4, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(4);
-				}
-				curKeyState[4] = false;
-				break;
-			case KeyEvent.VK_L:
-				if(curKeyState[5]){
-					curKeys.setKeyState(5, playing[1] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(5);
-				}
-				curKeyState[5] = false;
-				break;
-			case KeyEvent.VK_LEFT:
-				if(curKeyState[6]){
-					curKeys.setKeyState(6, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(6);
-				}
-				curKeyState[6] = false;
-				break;
-			case KeyEvent.VK_DOWN:
-				if(curKeyState[7]){
-					curKeys.setKeyState(7, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(7);
-				}
-				curKeyState[7] = false;
-				break;
-			case KeyEvent.VK_RIGHT:
-				if(curKeyState[8]){
-					curKeys.setKeyState(8, playing[2] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(8);
-				}
-				curKeyState[8] = false;
-				break;
-			case KeyEvent.VK_1:
-				if(curKeyState[9]){
-					curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(9);
-				}
-				curKeyState[9] = false;
-				break;
-			case KeyEvent.VK_2:
-				if(curKeyState[10]){
-					curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(10);
-				}
-				curKeyState[10] = false;
-				break;
-			case KeyEvent.VK_3:
-				if(curKeyState[11]){
-					curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(11);
-				}
-				curKeyState[11] = false;
-				break;
-			case KeyEvent.VK_NUMPAD1:
-				if(curKeyState[9]){
-					curKeys.setKeyState(9, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(9);
-				}
-				curKeyState[9] = false;
-				break;
-			case KeyEvent.VK_NUMPAD2:
-				if(curKeyState[10]){
-					curKeys.setKeyState(10, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(10);
-				}
-				curKeyState[10] = false;
-				break;
-			case KeyEvent.VK_NUMPAD3:
-				if(curKeyState[11]){
-					curKeys.setKeyState(11, playing[3] ? Keyboard.INACTIVE : Keyboard.INVISIBLE);
-					endEvent(11);
-				}
-				curKeyState[11] = false;
-				break;
-			default:
-				//ignore
-				break;
+			if(curBlocks!=null){
+				curBlocks.keyReleased(e);
 			}
 		} finally{myLock.unlock();}
 	}
@@ -490,6 +319,9 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 			bufDraw.drawImage(overlay, 0, 0, getWidth(), getHeight(), null);
 			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
 			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
+			if(curBlocks!=null){
+				curBlocks.paintComponent(bufDraw, getWidth(), getHeight());
+			}
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
