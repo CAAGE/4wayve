@@ -65,7 +65,12 @@ public class Keyboard{
 	protected BufferedImage[] keys;
 	
 	/**
-	 * This will load the images for the keys.
+	 * The images of the controls for each player.
+	 */
+	 protected BufferedImage[] controls;
+	
+	/**
+	 * This will load the images for the keys and their respective controls.
 	 * @param yloc The relative y location to draw the keys at.
 	 */
 	public Keyboard(float yloc) throws IOException{
@@ -73,7 +78,23 @@ public class Keyboard{
 		curPressed = new int[12];
 		keys = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png")),
 				ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png")),
-				ImageIO.read(ClassLoader.getSystemResource("images/keywrong.png"))};
+				ImageIO.read(ClassLoader.getSystemResource("images/keywrong.png"))
+		};
+		controls = new BufferedImage[]{
+				ImageIO.read(ClassLoader.getSystemResource("letters/a.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/s.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/d.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/j.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/k.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/l.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/left.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/down.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/right.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/1.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/2.png")),
+				ImageIO.read(ClassLoader.getSystemResource("letters/3.png"))
+		};				
+		
 	}
 	
 	/**
@@ -100,6 +121,12 @@ public class Keyboard{
 				int wid = (int)(KEYWID * width);
 				int hig = (int)(KEYHIG * height);
 				g2.drawImage(keys[curPressed[i]], xloc, yloc, wid, hig, null);
+				
+				//for letter display
+				int xloc2 = (int)((relLocs[i]+(2*XOFFSET/3))*width);
+				float YOFFSET = 0.02f;
+				int yloc2 = (int)((keyyloc + YOFFSET) * height);
+				g2.drawImage(controls[i],xloc2,yloc2,2*wid/3,2*hig/3,null);
 			}
 		}
 	}
