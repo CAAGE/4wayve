@@ -197,7 +197,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 						try{
 							AudioEventPlayer.saveEventFile(new File(fileLoc, locFileName + ".trk"), instruments, startFrames, endFrames);
 							AudioEventPlayer.generateMidiFile(new File(fileLoc, locFileName + ".mid"), instruments, startFrames, endFrames);
-						} catch(IOException e){e.printStackTrace();}
+						} catch(IOException|InvalidMidiDataException e){e.printStackTrace();}
 						//clear the lists
 						startFrames.get(0).clear();
 						startFrames.get(1).clear();
