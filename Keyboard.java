@@ -116,6 +116,7 @@ public class Keyboard{
 		Graphics2D g2 = (Graphics2D)g;
 		for(int i = 0; i<relLocs.length; i++){
 			if(curPressed[i] >= 0){
+				//for key display
 				int xloc = (int)((relLocs[i] + XOFFSET) * width);
 				int yloc = (int)(keyyloc * height);
 				int wid = (int)(KEYWID * width);
