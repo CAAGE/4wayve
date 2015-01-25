@@ -20,38 +20,6 @@ import javax.swing.JComponent;
   */
 
 public class TitleMenuPanel extends JComponent implements KeyListener, MouseListener, Runnable{
-  
-  /**
-   * The float location of the title
-   */
-  protected static final float TITLEXOFFSET = 0.01f;
-  protected static final float TITLEYOFFSET = 0.01f;
-  
-	/**
-	 * The x location of the blocks in the lanes relative to lane center.
-	 */
-	protected static final float XOFFSET = -0.025f;
-	
-	/**
-	 * The y location of the keys.
-	 */
-	protected static final float KEYYLOC = 0.45f;
-	
-	/**
-	 * The width of the keys.
-	 */
-	protected static final float KEYWID = 0.05f;
-	
-	/**
-	 * The height of the keys.
-	 */
-	protected static final float KEYHIG = 0.101f;
-	
-	/**
-	 * The relative x locations of the lanes.
-	 */
-	protected static final float[] relLocs = new float[]{1.0f/16, 2.0f/16, 3.0f/16, 5.0f/16, 6.0f/16, 7.0f/16, 9.0f/16, 10.0f/16, 11.0f/16, 13.0f/16, 14.0f/16, 15.0f/16};
-	
 	/**
 	 * The second buffer of this panel.
 	 */
@@ -88,23 +56,23 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	protected BufferedImage background;
 	
 	/**
-	 * The image for an inactive key.
+	 * Menu names / icons and cooresponding sizes
 	 */
-	protected BufferedImage inactiveKey;
-	
-	/**
-	 * The image for a pressed key.
-	 */
-	protected BufferedImage activeKey;
+	protected BufferedImage[] menuIcon;
+	protected static final float WIDICON = 0.07f;
+	protected static final float HEIICON = 0.7f;
+	protected static final float XLOCICON = 0.25f;
+	protected static final float YLOCICON = 0.3f;
+	protected static final float XICONOFFSET = 0.01f;
 	
 	/**
 	 * The image for the logo / title and cooresponding location params
 	 */
 	protected BufferedImage title;
-	protected static final float WIDTITLE = 0.6f;
-	protected static final float HEITITLE = 0.3f;
-	protected static final float XLOCTITLE = 0.05f;
-	protected static final float YLOCTITLE = 0.05f;
+	protected static final float WIDTITLE = 0.5f;
+	protected static final float HEITITLE = 0.25f;
+	protected static final float XLOCTITLE = 0f;
+	protected static final float YLOCTITLE = -0.01f;
 	
 	/**
 	 * Which keys are currently pressed.
@@ -122,15 +90,20 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	 * @param currOffset The current y offset of the background
 	 */
 	public TitleMenuPanel(BufferedImage backgroundImage, float curOffset) throws IOException{
-    inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
-    activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
     title = ImageIO.read(ClassLoader.getSystemResource("images/logo.png"));
+    
+    //Load icons
+    menuIcon = new BufferedImage[4];
+    menuIcon[0] = ImageIO.read(ClassLoader.getSystemResource("images/createMenuIcon.png"));
+    menuIcon[1] = ImageIO.read(ClassLoader.getSystemResource("images/playMenuIcon.png"));
+    menuIcon[2] = ImageIO.read(ClassLoader.getSystemResource("images/optionsMenuIcon.png"));
+    menuIcon[3] = ImageIO.read(ClassLoader.getSystemResource("images/exitMenuIcon.png"));
+    
    setDoubleBuffered(false);
     background = backgroundImage;
     backgroundOffset = curOffset;
     myLock = new ReentrantLock();
     frameNanos = 16000000;
-    curPressed = new boolean[relLocs.length];
     titleMenuOver = new MenuOverlay();
 	}
   
@@ -335,22 +308,21 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 				bufDraw.drawImage(background, 0, (int)cury, getWidth(), (int)scrheight, null);
 				cury += scrheight;
 			}
-			//Place keys to the middle based off their relative locations (floats)
-			for(int i = 0; i<relLocs.length; i++){
-        int xloc = (int)((relLocs[i] + XOFFSET) * getWidth());
-        int yloc = (int)(KEYYLOC * getHeight());
-        int wid = (int)(KEYWID * getWidth());
-        int hig = (int)(KEYHIG * getHeight());
-        //Based off state in curPressed[], draw cooresponding key
-        bufDraw.drawImage(curPressed[i] ? activeKey : inactiveKey, xloc, yloc, wid, hig, null);
+			//Place Icons onto the menu
+			for(int i = 0; i < menuIcon.length; ++i){
+        int xloc = (int)(((XLOCICON * i) + XICONOFFSET) * getWidth());
+        int yloc = (int)(YLOCICON * getHeight());
+        int wid = (int)(WIDICON * getWidth());
+        int hig = (int)(HEIICON * getHeight());
+        bufDraw.drawImage(menuIcon[i], xloc, yloc, wid, hig, null);
 			}
 			
 			//Place the title using a similar process as the icons
-			int xLoc = (int)(XLOCTITLE * getWidth());
-			int yLoc = (int)(YLOCTITLE * getHeight());
+			int xloc = (int)(XLOCTITLE * getWidth());
+			int yloc = (int)(YLOCTITLE * getHeight());
 			int wid = (int)(WIDTITLE * getWidth());
 			int hig = (int)(HEITITLE * getHeight());
-			bufDraw.drawImage(title, xLoc, yLoc, wid, hig, null);
+			bufDraw.drawImage(title, xloc, yloc, wid, hig, null);
 			titleMenuOver.paintComponent(bufDraw, getWidth(), getHeight());
 			
 			bufDraw.dispose();
@@ -365,7 +337,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
   }
 
   public static void main(String args[]) throws IOException{
-    JFrame mainframe = new JFrame();
+    JFrame mainframe = new JFrame("4Way(ve)");
     mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     mainframe.setSize(640,480);
     TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0f);
