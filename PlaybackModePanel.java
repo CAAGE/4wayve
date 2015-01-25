@@ -203,7 +203,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 					lastFrame = cur.get(cur.size()-1);
 				}
 			}
-			lastFrame += 60;
+			lastFrame += 300;
 			//randomize tracks
 			Random rand = new Random();
 			instruments = new int[4];
