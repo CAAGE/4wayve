@@ -20,41 +20,6 @@ import javax.swing.JComponent;
   */
 
 public class TitleMenuPanel extends JComponent implements KeyListener, MouseListener, Runnable{
-<<<<<<< HEAD
-=======
-  
-  /**
-   * The float location of the title
-   */
-  protected static final float TITLEXOFFSET = 0.25f;
-  protected static final float TITLEYOFFSET = 0.01f;
-  
-	/**
-	 * The x location of the blocks in the lanes relative to lane center.
-	 */
-	protected static final float XOFFSET = -0.025f;
-	
-	/**
-	 * The y location of the keys.
-	 */
-	protected static final float KEYYLOC = 0.45f;
-	
-	/**
-	 * The width of the keys.
-	 */
-	protected static final float KEYWID = 0.05f;
-	
-	/**
-	 * The height of the keys.
-	 */
-	protected static final float KEYHIG = 0.101f;
-	
-	/**
-	 * The relative x locations of the lanes.
-	 */
-	protected static final float[] relLocs = new float[]{1.0f/16, 2.0f/16, 3.0f/16, 5.0f/16, 6.0f/16, 7.0f/16, 9.0f/16, 10.0f/16, 11.0f/16, 13.0f/16, 14.0f/16, 15.0f/16};
-	
->>>>>>> origin/master
 	/**
 	 * The second buffer of this panel.
 	 */
@@ -83,7 +48,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	/**
 	 * The rate at which the background scrolls.
 	 */
-	protected static final float backgroundRate = 0.025f;
+	protected static final float backgroundRate = 0.00025f;
 	
 	/**
 	 * The background image.
@@ -297,31 +262,31 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 
 	/**
    * Send this ID to the parent to trigger a state change
-   * @param e The mouse event that occurred
+   * @param e The mouse event that occured
    */
   public void mouseClicked(MouseEvent e){}
   
   /**
    * Ignore mouse pressed
-   * @param e The mouse event that occurred
+   * @param e The mouse event that occured
    */
   public void mousePressed(MouseEvent e){titleMenuOver.setTrans(true, e.getX(), getWidth());}
   
   /**
    * Ignore mouse release
-   * @param e The mouse event that occurred
+   * @param e The mouse event that occured
    */
   public void mouseReleased(MouseEvent e){titleMenuOver.setTrans(false, e.getX(), getWidth());}
   
   /**
    * Add highlight when mouse enters
-   * @param e The mouse event that occurred
+   * @param e The mouse event that occured
    */
   public void mouseEntered(MouseEvent e){}
   
   /**
    * Remove highlight when mouse leaves
-   * @param e The mouse event that occurred
+   * @param e The mouse event that occured
    */
   public void mouseExited(MouseEvent e){}
 
