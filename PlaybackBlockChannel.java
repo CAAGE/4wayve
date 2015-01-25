@@ -252,7 +252,7 @@ public class PlaybackBlockChannel implements KeyListener{
 				currentFrames[lane]++;
 				float multiplier = 10*(1-(offset * 1.0f / FUDGEFRAMES))*(1-(missedFirst[lane] * 1.0f / FUDGEFRAMES));
 				currentPoints[lane] += (currentFrames[lane] * multiplier);
-				playerScores[lane/3].setScore((int)(currentPoints[lane/3] + currentPoints[lane/3+1] + currentPoints[lane/3+2]));
+				playerScores[lane/3].setScore((int)(currentPoints[3*(lane/3)] + currentPoints[3*(lane/3)+1] + currentPoints[3*(lane/3)+2]));
 			}
 			currentlyHitting[lane] = false;
 			nextEvent[lane]++;

@@ -119,7 +119,15 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	protected PlaybackBlockChannel curBlocks;
 	
+	/**
+	 * The displays for the player scores.
+	 */
 	protected Score[] playerScores;
+	
+	/**
+	 * The image to use for shading scores.
+	 */
+	protected BufferedImage shadowImg;
 	
 	/**
 	 * This creates a cration mode panel.
@@ -130,6 +138,7 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	 */
 	public PlaybackModePanel(BufferedImage backgroundImage, float backScrollRate, float blockScrollRate) throws IOException{
 		overlay = ImageIO.read(ClassLoader.getSystemResource("images/overlayFlip.png"));
+		shadowImg = ImageIO.read(ClassLoader.getSystemResource("images/shadows.png"));
 		curKeys = new Keyboard(0.801f);
 		setDoubleBuffered(false);
 		background = backgroundImage;
@@ -335,6 +344,14 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 			}
 			curKeys.paintComponent(bufDraw, getWidth(), getHeight());
 			curTimeDisp.paintComponent(bufDraw, getWidth(), getHeight());
+			//some shadows
+			int shadY = (int)(0.9f*getHeight());
+			int shadW = (int)(0.25f*getWidth());
+			int shadH = (int)(0.1f*getHeight());
+			bufDraw.drawImage(shadowImg, 0, shadY, shadW, shadH, null);
+			bufDraw.drawImage(shadowImg, (int)(0.25*getWidth()), shadY, shadW, shadH, null);
+			bufDraw.drawImage(shadowImg, (int)(0.5*getWidth()), shadY, shadW, shadH, null);
+			bufDraw.drawImage(shadowImg, (int)(0.75*getWidth()), shadY, shadW, shadH, null);
 			for(int i = 0; i<playing.length; i++){
 				if(playing[i]){
 					playerScores[i].paintComponent(bufDraw, getWidth(), getHeight());
