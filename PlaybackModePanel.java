@@ -189,11 +189,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 			for(int i = 0; i<instruments.length; i++){
 				instruments[i] = playing[i] ? -1 : 0;
 			}
-			startFrames = new ArrayList<>();
-			endFrames = new ArrayList<>();
+			startFrames = new ArrayList<List<Long>>();
+			endFrames = new ArrayList<List<Long>>();
 			for(int i = 0; i<12; i++){
-				startFrames.add(new ArrayList<>());
-				endFrames.add(new ArrayList<>());
+				startFrames.add(new ArrayList<Long>());
+				endFrames.add(new ArrayList<Long>());
 			}
 			boolean[] assigned = new boolean[4];
 			boolean foundAll = false;

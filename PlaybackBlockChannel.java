@@ -516,7 +516,26 @@ public class PlaybackBlockChannel implements KeyListener{
 				int midHeight = (int)((bulkEndY - bulkStartY) * height);
 				g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeight, null);
 			}
-			
+			if(nextEvent[lane]<laneStarts.size()){
+				float bulkStartY = FINALY - blockScrollRate*(laneEnds.get(nextEvent[lane])-curFrame);
+				float bulkEndY = FINALY - blockScrollRate*(laneStarts.get(nextEvent[lane])-curFrame);
+				if(currentlyHitting[lane]){
+					int midStartY = (int)(bulkStartY * height);
+					int midHeightCol = (int)((FINALY - bulkStartY) * height);
+					int midStartSecondY = midStartY + midHeightCol;
+					int midHeightGray = (int)((bulkEndY - FINALY) * height);
+					g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeightCol, null);
+					g2.drawImage(graImgs[1], laneX, midStartSecondY, laneW, midHeightGray, null);
+				}
+				else{
+					if(bulkEndY < (-2*CAPHEIGHT)){
+						break;
+					}
+					int midStartY = (int)(bulkStartY * height);
+					int midHeight = (int)((bulkEndY - bulkStartY) * height);
+					g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeight, null);
+				}
+			}
 			for(int i = nextEvent[lane]-1; i>=0; i--){
 				float bulkStartY = FINALY - blockScrollRate*(laneEnds.get(i)-curFrame);
 				if(bulkStartY > (1+2*CAPHEIGHT)){
