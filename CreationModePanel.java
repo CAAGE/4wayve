@@ -115,7 +115,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	protected TimerDisplay curTimeDisp;
 	
 	/**
-	 * This creates a cration mode panel.
+	 * This creates a creation mode panel.
 	 * @param backgroundImage The image to display as a background.
 	 * @param backScrollRate The rate at which the background should scroll.
 	 * @param blockScrollRate The rate at which the stones fall.
