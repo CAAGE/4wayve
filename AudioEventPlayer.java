@@ -243,9 +243,176 @@ public class AudioEventPlayer {
 		mm.setMessage(0xB0, 0x7F,0x00);
 		me = new MidiEvent(mm,(long)0);
 		t.add(me);
+        int instrument = 0;
+        int bank = 0;
+        int note = 0;
+        int notevalue = 0;
         for(int lane = 0;lane<12;lane++){
+            if(0<=lane && lane<= 2){
+                instrument = instrumentList[0];
+            }
+            if(3<=lane && lane<=5){
+                instrument = instrumentList[1];
+            }
+            if(6<=lane && lane<=8){
+                instrument = instrumentList[2];
+            }
+            if(9<=lane){
+                instrument = instrumentList[3];
+            }
+            note = lane %3;
             int eventcount = startTimes.get(lane).size();
             for(int i = 0;i<eventcount;i++){
+                if(instrument == 0){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 0, 0);
+                    me = new MidiEvent(midiinstrument,(long)startTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 60;
+                    } if(note == 1){
+                        notevalue = 64;
+                    } if(note == 2){
+                        notevalue = 67;
+                    }
+                }
+                if(instrument == 1){
+                    bank = 9;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,0,0);
+                    me = new MidiEvent(midiinstrument,(long)startTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 36;
+                    }
+                    if(note == 1){
+                        notevalue = 38;
+                    }
+                    if(note == 2){
+                        notevalue = 49;
+                    }
+                }
+                if(instrument == 2){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,33,0);
+                    me = new MidiEvent(midiinstrument,(long)startTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 36;
+                    }
+                    if(note == 1){
+                        notevalue = 40;
+                    }
+                    if(note == 2){
+                        notevalue = 43;
+                    }
+                }
+                if(instrument == 3){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,26,0);
+                    me = new MidiEvent(midiinstrument,(long)startTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 48;
+                    }
+                    if(note == 1){
+                        notevalue = 52;
+                    }
+                    if(note == 2){
+                        notevalue = 55;
+                    }
+                }
+                ShortMessage midinote = new ShortMessage();
+                midinote.setMessage(ShortMessage.NOTE_ON, bank, notevalue, 93);
+                me = new MidiEvent(midinote,(long)startTimes.get(lane).get(i));
+                t.add(me);
+            }
+        }
+        for(int lane = 0;lane<12;lane++){
+            if(0<=lane && lane<= 2){
+                instrument = instrumentList[0];
+            }
+            if(3<=lane && lane<=5){
+                instrument = instrumentList[1];
+            }
+            if(6<=lane && lane<=8){
+                instrument = instrumentList[2];
+            }
+            if(9<=lane){
+                instrument = instrumentList[3];
+            }
+            note = lane %3;
+            int eventcount = endTimes.get(lane).size();
+            for(int i = 0;i<eventcount;i++){
+                if(instrument == 0){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 0, 0);
+                    me = new MidiEvent(midiinstrument,(long)endTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 60;
+                    } if(note == 1){
+                        notevalue = 64;
+                    } if(note == 2){
+                        notevalue = 67;
+                    }
+                }
+                if(instrument == 1){
+                    bank = 9;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,0,0);
+                    me = new MidiEvent(midiinstrument,(long)endTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 36;
+                    }
+                    if(note == 1){
+                        notevalue = 38;
+                    }
+                    if(note == 2){
+                        notevalue = 49;
+                    }
+                }
+                if(instrument == 2){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,33,0);
+                    me = new MidiEvent(midiinstrument,(long)endTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 36;
+                    }
+                    if(note == 1){
+                        notevalue = 40;
+                    }
+                    if(note == 2){
+                        notevalue = 43;
+                    }
+                }
+                if(instrument == 3){
+                    bank = 0;
+                    ShortMessage midiinstrument = new ShortMessage();
+                    midiinstrument.setMessage(ShortMessage.PROGRAM_CHANGE,0,26,0);
+                    me = new MidiEvent(midiinstrument,(long)endTimes.get(lane).get(i)-1);
+                    t.add(me);
+                    if(note == 0){
+                        notevalue = 48;
+                    }
+                    if(note == 1){
+                        notevalue = 52;
+                    }
+                    if(note == 2){
+                        notevalue = 55;
+                    }
+                }
+                ShortMessage midinote = new ShortMessage();
+                midinote.setMessage(ShortMessage.NOTE_OFF, bank, notevalue, 93);
+                me = new MidiEvent(midinote,(long)endTimes.get(lane).get(i));
+                t.add(me);
             }
         }
         //end file
@@ -255,11 +422,10 @@ public class AudioEventPlayer {
 		me = new MidiEvent(mt, (long)140);
 		t.add(me);
         //output to file
-        String filename = "midifile.mid";
-        File f = new File(filename);
-		MidiSystem.write(s,1,f);
+		MidiSystem.write(s,1,fileToWrite);
         return 0;
     }
+    
 	public static void main(String[] args) throws MidiUnavailableException,InvalidMidiDataException,IOException{
         Sequencer sequencer;
 	    // Get default sequencer.
