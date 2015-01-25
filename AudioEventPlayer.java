@@ -15,6 +15,11 @@ import javax.sound.midi.Sequencer;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Track;
+import javax.sound.midi.SysexMessage;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.InvalidMidiDataException;
 import java.io.File;
@@ -213,8 +218,49 @@ public class AudioEventPlayer {
 		toRead.close();
 		return new Object[]{instruments, startTimes, endTimes};
 	}
-	
-	public static void main(String[] args) throws MidiUnavailableException,InvalidMidiDataException{
+	public static int generateMidiFile(List<List<Long>> startTimes, List<List<Long>> endTimes) throws InvalidMidiDataException,IOException{
+        Sequence s = new Sequence(javax.sound.midi.Sequence.PPQ,24);
+        Track t = s.createTrack();
+        //use general midi
+        byte[] b = {(byte)0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte)0xF7};
+		SysexMessage sm = new SysexMessage();
+		sm.setMessage(b, 6);
+		MidiEvent me = new MidiEvent(sm,(long)0);
+		t.add(me);
+        //set tempo
+        MetaMessage mt = new MetaMessage();
+        byte[] bt = {0x02, (byte)0xf240, 0x00};
+		mt.setMessage(0x51 ,bt, 3);
+		me = new MidiEvent(mt,(long)0);
+		t.add(me);
+        //set omni on
+        ShortMessage mm = new ShortMessage();
+		mm.setMessage(0xB0, 0x7D,0x00);
+		me = new MidiEvent(mm,(long)0);
+		t.add(me);
+        //set poly on
+        mm = new ShortMessage();
+		mm.setMessage(0xB0, 0x7F,0x00);
+		me = new MidiEvent(mm,(long)0);
+		t.add(me);
+        for(int lane = 0;lane<12;lane++){
+            int eventcount = startTimes.get(lane).size();
+            for(int i = 0;i<eventcount;i++){
+            }
+        }
+        //end file
+        mt = new MetaMessage();
+        byte[] bet = {}; // empty array
+		mt.setMessage(0x2F,bet,0);
+		me = new MidiEvent(mt, (long)140);
+		t.add(me);
+        //output to file
+        String filename = "midifile.mid";
+        File f = new File(filename);
+		MidiSystem.write(s,1,f);
+        return 0;
+    }
+	public static void main(String[] args) throws MidiUnavailableException,InvalidMidiDataException,IOException{
         Sequencer sequencer;
 	    // Get default sequencer.
 	    sequencer = MidiSystem.getSequencer(); 
@@ -235,6 +281,7 @@ public class AudioEventPlayer {
             startNote(1,2);
             try{Thread.sleep(500);}catch(InterruptedException e){}
             endNote(1,2);
+            generateMidiFile();
         }   
     }
 }
