@@ -42,7 +42,7 @@ public class PlaybackBlockChannel implements KeyListener{
 	/**
 	 * The amount of frames to allow the player around the leading and trailing edges.
 	 */
-	protected static final int FUDGEFRAMES = 6;
+	protected static final int FUDGEFRAMES = 20;
 	
 	/**
 	 * The rate at which blocks scroll.
@@ -92,7 +92,7 @@ public class PlaybackBlockChannel implements KeyListener{
 	/**
 	 * The amount of points each lane has garnered.
 	 */
-	protected int[] currentPoints;
+	protected float[] currentPoints;
 	
 	/**
 	 * Whether each lane is currently hitting a note.
@@ -140,6 +140,11 @@ public class PlaybackBlockChannel implements KeyListener{
 	protected BufferedImage[][] colImgs;
 	
 	/**
+	 * The displays for the player scores.
+	 */
+	protected Score[] playerScores;
+	
+	/**
 	 * This loads images for drawing blocks.
 	 * @param blockScrollRate The rate at which blocks scroll.
 	 * @param playing The currently active players.
@@ -147,8 +152,9 @@ public class PlaybackBlockChannel implements KeyListener{
 	 * @param startFrames The starting frames of the songs for each player.
 	 * @param endFrames The ending frames of the songs for each player.
 	 * @param instruments The instruments to play for each player.
+	 * @param playerScores The displays for the player scores.
 	 */
-	public PlaybackBlockChannel(float blockScrollRate, boolean[] playing, Keyboard curKeys, List<List<Long>> startFrames, List<List<Long>> endFrames, int[] instruments) throws IOException{
+	public PlaybackBlockChannel(float blockScrollRate, boolean[] playing, Keyboard curKeys, List<List<Long>> startFrames, List<List<Long>> endFrames, int[] instruments, Score[] playerScores) throws IOException{
 		this.blockScrollRate = blockScrollRate;
 		this.curKeys = curKeys;
 		this.curKeyState = new boolean[12];
@@ -158,7 +164,7 @@ public class PlaybackBlockChannel implements KeyListener{
 		this.startFrames = startFrames;
 		curFrame = -100;
 		nextEvent = new int[12];
-		currentPoints = new int[12];
+		currentPoints = new float[12];
 		currentlyHitting = new boolean[12];
 		currentFrames = new int[12];
 		missedFirst = new int[12];
@@ -168,6 +174,7 @@ public class PlaybackBlockChannel implements KeyListener{
 		purImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomPurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddlePurple.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopPurple.png"))};
 		graImgs = new BufferedImage[]{ImageIO.read(ClassLoader.getSystemResource("images/blockBottomGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockMiddleGray.png")), ImageIO.read(ClassLoader.getSystemResource("images/blockTopGray.png"))};
 		colImgs = new BufferedImage[][]{redImgs, yelImgs, bluImgs, purImgs};
+		this.playerScores = playerScores;
 	}
 	
 	/**
@@ -243,8 +250,9 @@ public class PlaybackBlockChannel implements KeyListener{
 			long offset = Math.abs(actualEnd - curFrame);
 			if(offset < FUDGEFRAMES){
 				currentFrames[lane]++;
-				float multiplier = (1-(offset * 1.0f / FUDGEFRAMES))*(1-(missedFirst[lane] * 1.0f / FUDGEFRAMES));
-				currentPoints[lane] += (int)(currentFrames[lane] * multiplier);
+				float multiplier = 10*(1-(offset * 1.0f / FUDGEFRAMES))*(1-(missedFirst[lane] * 1.0f / FUDGEFRAMES));
+				currentPoints[lane] += (currentFrames[lane] * multiplier);
+				playerScores[lane/3].setScore((int)(currentPoints[lane/3] + currentPoints[lane/3+1] + currentPoints[lane/3+2]));
 			}
 			currentlyHitting[lane] = false;
 			nextEvent[lane]++;
@@ -505,6 +513,7 @@ public class PlaybackBlockChannel implements KeyListener{
 			
 			int laneX = (int)(width * (relLocs[lane] + XOFFSET));
 			int laneW = (int)(width * STONEWIDTH);
+			int capHeight = (int)(height * CAPHEIGHT);
 			
 			for(int i = nextEvent[lane]+1; i<laneStarts.size(); i++){
 				float bulkStartY = FINALY - blockScrollRate*(laneEnds.get(i)-curFrame);
@@ -528,12 +537,11 @@ public class PlaybackBlockChannel implements KeyListener{
 					g2.drawImage(graImgs[1], laneX, midStartSecondY, laneW, midHeightGray, null);
 				}
 				else{
-					if(bulkEndY < (-2*CAPHEIGHT)){
-						break;
+					if(bulkEndY >= (-2*CAPHEIGHT)){
+						int midStartY = (int)(bulkStartY * height);
+						int midHeight = (int)((bulkEndY - bulkStartY) * height);
+						g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeight, null);
 					}
-					int midStartY = (int)(bulkStartY * height);
-					int midHeight = (int)((bulkEndY - bulkStartY) * height);
-					g2.drawImage(colImgs[lane/3][1], laneX, midStartY, laneW, midHeight, null);
 				}
 			}
 			for(int i = nextEvent[lane]-1; i>=0; i--){

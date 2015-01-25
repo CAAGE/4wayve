@@ -590,7 +590,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 		JFrame mainframe = new JFrame();
 		mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainframe.setSize(640,480);
-		CreationModePanel toTest = new CreationModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.0025f);
+		CreationModePanel toTest = new CreationModePanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0.0025f, 0.005f);
 		toTest.setMetronomeFrames(60);
 		toTest.setPlayerActive(0, true);
 		toTest.setPlayerActive(1, true);
