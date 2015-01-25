@@ -1,5 +1,7 @@
-import java.util.Random;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+import javax.swing.JFileChooser;
+import java.util.Random;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -177,11 +179,18 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 	
 	/**
 	 * This will start playing a song.
-	 * @param toLoad The song to play.
 	 * @throws IOException If there is a problem reading the song (if this is thrown, no song will play).
 	 */
 	@SuppressWarnings("unchecked")
-	public void playSong(File toLoad) throws IOException{
+	public void playSong() throws IOException{
+		JFileChooser toSelTrk = new JFileChooser();
+		toSelTrk.setFileFilter(new FileNameExtensionFilter("Track files.", "trk"));
+		toSelTrk.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		int res = toSelTrk.showOpenDialog(this);
+		if(res != JFileChooser.APPROVE_OPTION){
+			throw new IOException("User canceled.");
+		}
+		File toLoad = toSelTrk.getSelectedFile();
 		myLock.lock(); try{
 			Object[] trackData = AudioEventPlayer.readEventFile(toLoad);
 			int[] tmpinstruments = (int[])(trackData[0]);
@@ -380,11 +389,11 @@ public class PlaybackModePanel extends JComponent implements Runnable, KeyListen
 		toTest.setPlayerActive(1, true);
 		toTest.setPlayerActive(2, true);
 		toTest.setPlayerActive(3, true);
-		toTest.playSong(new File("C:\\Users\\Benjamin\\GameSaves\\FourWayve\\testtrack.trk"));
 		mainframe.add(toTest);
 		mainframe.addKeyListener(toTest);
 		mainframe.setVisible(true);
 		Thread toRun = new Thread(toTest);
 		toRun.start();
+		toTest.playSong();
 	}
 }

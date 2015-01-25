@@ -190,11 +190,11 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 					instruments[3] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
 					
 					JFileChooser toSelTrk = new JFileChooser();
-					toSelTrk.setFileFilter(new FileNameExtensionFilter("Track files.", ".trk"));
+					toSelTrk.setFileFilter(new FileNameExtensionFilter("Track files.", "trk"));
 					toSelTrk.setFileSelectionMode(JFileChooser.FILES_ONLY);
 					int trkRes = toSelTrk.showSaveDialog(this);
 					JFileChooser toSelMid = new JFileChooser();
-					toSelMid.setFileFilter(new FileNameExtensionFilter("Midi files.", ".midi"));
+					toSelTrk.setFileFilter(new FileNameExtensionFilter("Midi files.", "mid"));
 					toSelMid.setFileSelectionMode(JFileChooser.FILES_ONLY);
 					int midRes = toSelMid.showSaveDialog(this);
 					try{
