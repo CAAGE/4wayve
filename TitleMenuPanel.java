@@ -78,7 +78,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	/**
 	 * The rate at which the background scrolls.
 	 */
-	protected float backgroundRate = 0.00055f;
+	protected float backgroundRate = 0.00025f;
 	
 	/**
 	 * The background image.
@@ -100,6 +100,11 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
 	 */
 	protected boolean[] curPressed;
 	
+	/**
+	 * Title menu overlay for mouse interaction
+	 */
+	protected MenuOverlay titleMenuOver;
+	
 	public TitleMenuPanel(BufferedImage backgroundImage) throws IOException{
     inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
     activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
@@ -109,6 +114,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
     myLock = new ReentrantLock();
     frameNanos = 16000000;
     curPressed = new boolean[relLocs.length];
+    titleMenuOver = new MenuOverlay();
 	}
   
   /**
@@ -284,6 +290,11 @@ public class TitleMenuPanel extends JComponent implements KeyListener, Runnable{
         int hig = (int)(KEYHIG * getHeight());
         bufDraw.drawImage(curPressed[i] ? activeKey : inactiveKey, xloc, yloc, wid, hig, null);
 			}
+			
+			
+titleMenuOver.repaint();
+			
+			
 			bufDraw.dispose();
 			
 			Graphics2D g2 = (Graphics2D)g;
