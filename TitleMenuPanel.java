@@ -98,7 +98,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	protected BufferedImage activeKey;
 	
 	/**
-	 * The image for the logo / title
+	 * The image for the logo / title and cooresponding location params
 	 */
 	protected BufferedImage title;
 	protected static final float WIDTITLE = 0.6f;
@@ -116,13 +116,18 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	 */
 	protected MenuOverlay titleMenuOver;
 	
-	public TitleMenuPanel(BufferedImage backgroundImage) throws IOException{
+	/**
+	 * Constructor, set up buffered images and start-up offsets
+	 * @param backgroundImage The image displayed in the background
+	 * @param currOffset The current y offset of the background
+	 */
+	public TitleMenuPanel(BufferedImage backgroundImage, float curOffset) throws IOException{
     inactiveKey = ImageIO.read(ClassLoader.getSystemResource("images/keyinactive.png"));
     activeKey = ImageIO.read(ClassLoader.getSystemResource("images/keyactive.png"));
     title = ImageIO.read(ClassLoader.getSystemResource("images/logo.png"));
    setDoubleBuffered(false);
     background = backgroundImage;
-    backgroundOffset = 0;
+    backgroundOffset = curOffset;
     myLock = new ReentrantLock();
     frameNanos = 16000000;
     curPressed = new boolean[relLocs.length];
@@ -313,7 +318,8 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
   public void mouseExited(MouseEvent e){}
 
   /**
-   *
+   * Draw the field
+   * @param g The field to be drawn
    */
   protected void paintComponent(Graphics g){
     myLock.lock(); try{
@@ -322,20 +328,24 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 			}
 			Graphics2D bufDraw = (Graphics2D)(buffer.getGraphics());
 			float scale = (getWidth() * 1.0f) / background.getWidth();
-			float scrheight = scale * background.getHeight();
-			float cury = backgroundOffset - scrheight;
+			float scrheight = scale * background.getHeight(); 
+			//re-adjust current y-coord on background
+			float cury = backgroundOffset - scrheight; 
 			while(cury < getHeight()){
 				bufDraw.drawImage(background, 0, (int)cury, getWidth(), (int)scrheight, null);
 				cury += scrheight;
 			}
+			//Place keys to the middle based off their relative locations (floats)
 			for(int i = 0; i<relLocs.length; i++){
         int xloc = (int)((relLocs[i] + XOFFSET) * getWidth());
         int yloc = (int)(KEYYLOC * getHeight());
         int wid = (int)(KEYWID * getWidth());
         int hig = (int)(KEYHIG * getHeight());
+        //Based off state in curPressed[], draw cooresponding key
         bufDraw.drawImage(curPressed[i] ? activeKey : inactiveKey, xloc, yloc, wid, hig, null);
 			}
 			
+			//Place the title using a similar process as the icons
 			int xLoc = (int)(XLOCTITLE * getWidth());
 			int yLoc = (int)(YLOCTITLE * getHeight());
 			int wid = (int)(WIDTITLE * getWidth());
@@ -345,6 +355,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 			
 			bufDraw.dispose();
 			
+			//Draw the buffer to the screen
 			Graphics2D g2 = (Graphics2D)g;
 			g2.drawImage(buffer,0,0,null);
 			//make changes visible
@@ -357,7 +368,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
     JFrame mainframe = new JFrame();
     mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     mainframe.setSize(640,480);
-    TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")));
+    TitleMenuPanel TitlePanel = new TitleMenuPanel(ImageIO.read(ClassLoader.getSystemResource("images/background.png")), 0f);
     TitlePanel.activate();
     mainframe.add(TitlePanel);
     mainframe.addKeyListener(TitlePanel);
