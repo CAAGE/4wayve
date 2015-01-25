@@ -24,7 +24,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
   /**
    * The float location of the title
    */
-  protected static final float TITLEXOFFSET = 0.01f;
+  protected static final float TITLEXOFFSET = 0.25f;
   protected static final float TITLEYOFFSET = 0.01f;
   
 	/**
@@ -80,7 +80,7 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 	/**
 	 * The rate at which the background scrolls.
 	 */
-	protected static final float backgroundRate = 0.00025f;
+	protected static final float backgroundRate = 0.025f;
 	
 	/**
 	 * The background image.
@@ -289,31 +289,31 @@ public class TitleMenuPanel extends JComponent implements KeyListener, MouseList
 
 	/**
    * Send this ID to the parent to trigger a state change
-   * @param e The mouse event that occured
+   * @param e The mouse event that occurred
    */
   public void mouseClicked(MouseEvent e){}
   
   /**
    * Ignore mouse pressed
-   * @param e The mouse event that occured
+   * @param e The mouse event that occurred
    */
   public void mousePressed(MouseEvent e){titleMenuOver.setTrans(true, e.getX(), getWidth());}
   
   /**
    * Ignore mouse release
-   * @param e The mouse event that occured
+   * @param e The mouse event that occurred
    */
   public void mouseReleased(MouseEvent e){titleMenuOver.setTrans(false, e.getX(), getWidth());}
   
   /**
    * Add highlight when mouse enters
-   * @param e The mouse event that occured
+   * @param e The mouse event that occurred
    */
   public void mouseEntered(MouseEvent e){}
   
   /**
    * Remove highlight when mouse leaves
-   * @param e The mouse event that occured
+   * @param e The mouse event that occurred
    */
   public void mouseExited(MouseEvent e){}
 
