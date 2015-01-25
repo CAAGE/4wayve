@@ -1,3 +1,6 @@
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import javax.swing.JFileChooser;
 import java.io.File;
 import java.util.Random;
 import java.util.ArrayList;
@@ -177,27 +180,41 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 				framesRemaining--;
 				if(framesRemaining<=0){
 					active = false;
-					myLock.lock(); try{
-						//randomly assign instruments
-						Random rand = new Random();
-						int[] instruments = new int[4];
-						instruments[0] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
-						instruments[1] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
-						instruments[2] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
-						instruments[3] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
-						//write the file
-						String locFileName = "track" + System.currentTimeMillis();
-						String usrHome = System.getProperty("user.home");
-						char pathSepChar = File.separatorChar;
-						String fileLoc = usrHome + pathSepChar + "GameSaves" + pathSepChar + "FourWayve";
-						File parentFolder = new File(fileLoc);
-						if(!parentFolder.exists()){
-							parentFolder.mkdirs();
+					
+					//randomly assign instruments
+					Random rand = new Random();
+					int[] instruments = new int[4];
+					instruments[0] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+					instruments[1] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+					instruments[2] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+					instruments[3] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
+					
+					JFileChooser toSelTrk = new JFileChooser();
+					toSelTrk.setFileFilter(new FileNameExtensionFilter("Track files.", ".trk"));
+					toSelTrk.setFileSelectionMode(JFileChooser.FILES_ONLY);
+					int trkRes = toSelTrk.showSaveDialog(this);
+					JFileChooser toSelMid = new JFileChooser();
+					toSelMid.setFileFilter(new FileNameExtensionFilter("Midi files.", ".midi"));
+					toSelMid.setFileSelectionMode(JFileChooser.FILES_ONLY);
+					int midRes = toSelMid.showSaveDialog(this);
+					try{
+						if(trkRes == JFileChooser.APPROVE_OPTION){
+							File trackFile = toSelTrk.getSelectedFile();
+							if(!trackFile.getAbsolutePath().endsWith(".trk")){
+								trackFile = new File(trackFile + ".trk");
+							}
+							AudioEventPlayer.saveEventFile(trackFile, instruments, startFrames, endFrames);
 						}
-						try{
-							AudioEventPlayer.saveEventFile(new File(fileLoc, locFileName + ".trk"), instruments, startFrames, endFrames);
-							AudioEventPlayer.generateMidiFile(new File(fileLoc, locFileName + ".mid"), instruments, startFrames, endFrames);
-						} catch(IOException|InvalidMidiDataException e){e.printStackTrace();}
+						if(midRes == JFileChooser.APPROVE_OPTION){
+							File midFile = toSelMid.getSelectedFile();
+							if(!midFile.getAbsolutePath().endsWith(".mid")){
+								midFile = new File(midFile + ".mid");
+							}
+							AudioEventPlayer.generateMidiFile(midFile, instruments, startFrames, endFrames);
+						}
+					} catch(IOException|InvalidMidiDataException e){e.printStackTrace();}
+					
+					myLock.lock(); try{
 						//clear the lists
 						startFrames.get(0).clear();
 						startFrames.get(1).clear();
@@ -225,6 +242,8 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 						endFrames.get(11).clear();
 						//let the menu know the name of the file
 					}finally{myLock.unlock();}
+					//tell main to show menu
+					
 				}
 				else if(framesRemaining % metronomeFrames == 0){
 					try{
@@ -310,6 +329,9 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 * @param e The key being pressed.
 	 */
 	public void keyPressed(KeyEvent e){
+		if(!active){
+			return;
+		}
 		myLock.lock(); try{
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_A:
@@ -429,6 +451,9 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 	 * @param e The key being released.
 	 */
 	public void keyReleased(KeyEvent e){
+		if(!active){
+			return;
+		}
 		myLock.lock(); try{
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_A:
