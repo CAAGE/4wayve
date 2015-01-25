@@ -186,7 +186,7 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 						instruments[2] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
 						instruments[3] = rand.nextInt(AudioEventPlayer.MAXIMPLEMENTEDINSTRUMENTINDEX+1);
 						//write the file
-						String locFileName = "track" + System.currentTimeMillis() + ".trk";
+						String locFileName = "track" + System.currentTimeMillis();
 						String usrHome = System.getProperty("user.home");
 						char pathSepChar = File.separatorChar;
 						String fileLoc = usrHome + pathSepChar + "GameSaves" + pathSepChar + "FourWayve";
@@ -195,7 +195,8 @@ public class CreationModePanel extends JComponent implements Runnable, KeyListen
 							parentFolder.mkdirs();
 						}
 						try{
-							AudioEventPlayer.saveEventFile(new File(fileLoc, locFileName), instruments, startFrames, endFrames);
+							AudioEventPlayer.saveEventFile(new File(fileLoc, locFileName + ".trk"), instruments, startFrames, endFrames);
+							AudioEventPlayer.generateMidiFile(new File(fileLoc, locFileName + ".mid"), instruments, startFrames, endFrames);
 						} catch(IOException e){e.printStackTrace();}
 						//clear the lists
 						startFrames.get(0).clear();

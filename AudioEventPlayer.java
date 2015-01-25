@@ -218,7 +218,7 @@ public class AudioEventPlayer {
 		toRead.close();
 		return new Object[]{instruments, startTimes, endTimes};
 	}
-	public static int generateMidiFile(List<List<Long>> startTimes, List<List<Long>> endTimes) throws InvalidMidiDataException,IOException{
+	public static int generateMidiFile(File fileToWrite, int[] instrumentList, List<List<Long>> startTimes, List<List<Long>> endTimes) throws InvalidMidiDataException,IOException{
         Sequence s = new Sequence(javax.sound.midi.Sequence.PPQ,24);
         Track t = s.createTrack();
         //use general midi
@@ -281,7 +281,7 @@ public class AudioEventPlayer {
             startNote(1,2);
             try{Thread.sleep(500);}catch(InterruptedException e){}
             endNote(1,2);
-            generateMidiFile();
+            //generateMidiFile();
         }   
     }
 }
