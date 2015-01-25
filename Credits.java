@@ -148,7 +148,6 @@ public class Credits extends JComponent implements MouseListener, KeyListener, R
    */
   public void mouseReleased(MouseEvent e){
     titleMenuOver.setTrans(false, e.getX(), getWidth());
-    //TitleMenuPanel.showMenu();
   }
   
   /**
