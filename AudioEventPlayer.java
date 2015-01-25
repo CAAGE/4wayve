@@ -221,42 +221,13 @@ public class AudioEventPlayer {
 	public static int generateMidiFile(File fileToWrite, int[] instrumentList, List<List<Long>> startTimes, List<List<Long>> endTimes) throws InvalidMidiDataException,IOException{
         Sequence s = new Sequence(javax.sound.midi.Sequence.PPQ,24);
         Track t = s.createTrack();
-        int header[] = new int[]{
-        0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
-        0x00, 0x00, // single-track format
-        0x00, 0x01, // one track
-        0x00, 0x10, // 16 ticks per quarter
-        0x4d, 0x54, 0x72, 0x6B
-        };
-        MetaMessage mmm = new MetaMessage();
-        MidiEvent me = new MidiEvent(mmm,(long)0);
-        //use general midi
-        byte[] b = {(byte)0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte)0xF7};
-		SysexMessage sm = new SysexMessage();
-		sm.setMessage(b, 6);
-		me = new MidiEvent(sm,(long)0);
-		t.add(me);
-        //set tempo
-        MetaMessage mt = new MetaMessage();
-        byte[] bt = {0x02, (byte)60, 0x00};
-		mt.setMessage(0x51 ,bt, 3);
-		me = new MidiEvent(mt,(long)0);
-		t.add(me);
-        //set omni on
-        ShortMessage mm = new ShortMessage();
-		mm.setMessage(0xB0, 0x7D,0x00);
-		me = new MidiEvent(mm,(long)0);
-		t.add(me);
-        //set poly on
-        mm = new ShortMessage();
-		mm.setMessage(0xB0, 0x7F,0x00);
-		me = new MidiEvent(mm,(long)0);
-		t.add(me);
         int instrument = 0;
         int bank = 0;
         int note = 0;
         int notevalue = 0;
         long lastframe = 0;
+        MidiEvent me;
+        MetaMessage mt;
         for(int lane = 0;lane<12;lane++){
             if(0<=lane && lane<= 2){
                 instrument = instrumentList[0];
@@ -272,6 +243,7 @@ public class AudioEventPlayer {
             }
             note = lane %3;
             int eventcount = startTimes.get(lane).size();
+            
             for(int i = 0;i<eventcount;i++){
                 if(instrument == 0){
                     bank = 0;
@@ -427,17 +399,10 @@ public class AudioEventPlayer {
                 me = new MidiEvent(midinote,(long)endTimes.get(lane).get(i)*3);
                 t.add(me);
                 if((long)endTimes.get(lane).get(i)>lastframe){
-                    lastframe = endTimes.get(lane).get(i)*3;
+                    lastframe = endTimes.get(lane).get(i);
                 }
             }
         }
-        System.out.println(lastframe);
-        //end file
-        mt = new MetaMessage();
-        byte[] bet = {}; // empty array
-		mt.setMessage(0x2F,bet,0);
-		me = new MidiEvent(mt, (long)lastframe+1);
-		t.add(me);
         //output to file
 		MidiSystem.write(s,1,fileToWrite);
         return 0;
